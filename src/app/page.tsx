@@ -114,12 +114,11 @@ export default function HomePage() {
           initial={{ opacity: 0.08, scale: 1.0 }}
           animate={{ opacity: 0.10, scale: 1 }}
           transition={{ duration: 2.4 }}
-          className="absolute inset-0 z-0 bg-center bg-no-repeat filter blur-[1px] bg-[length:110%_auto] sm:bg-[length:120%_auto] md:bg-[length:130%_auto] lg:bg-[length:140%_auto]"
+          className="absolute inset-0 z-0 bg-center bg-no-repeat filter blur-[1px] bg-[length:72%_auto] sm:bg-[length:84%_auto] md:bg-[length:96%_auto] lg:bg-[length:108%_auto]"
           style={{
             backgroundImage: `url('/images/logo-burgundy.jpg')`,
             backgroundPosition: 'center center',
             backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed',
           }}
         />
 
