@@ -28,11 +28,11 @@ export interface ToastMessage {
 }
 
 interface AppContextType {
-  user: any;
+  user: User | null;
   loadingAuth: boolean;
   cart: CartItem[];
   wishlist: string[];
-  orders: any[];
+  orders: Order[];
   reviews: any[];
   settings: any;
   toasts: ToastMessage[];

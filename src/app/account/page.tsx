@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useApp } from '../../context/AppContext';
-import { serviceDb, Address, Order } from '../../lib/firebase';
+import { useApp, Address } from '../../context/AppContext';
+import { serviceDb } from '../../lib/firebase';
 import { useRouter } from 'next/navigation';
 import { User, MapPin, Package, Gift, Trash2, Calendar, ShieldCheck, ChevronRight, Award, Truck } from 'lucide-react';
 
 export default function AccountPage() {
-  const { user, logout, settings, setAuthModalOpen, deleteAddress, triggerToast } = useApp();
+  const { user, logout, settings, setAuthModalOpen, triggerToast } = useApp();
   const router = useRouter();
 
   const [addresses, setAddresses] = useState<Address[]>([]);

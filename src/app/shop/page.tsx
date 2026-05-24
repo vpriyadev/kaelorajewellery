@@ -294,7 +294,7 @@ function ShopContent() {
               </span>
               <select
                 value={sortBy}
-                onChange={(e: any) => setSortBy(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as typeof sortBy)}
                 className="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-[#1A1A1A] font-semibold focus:outline-none focus:border-[#D4AF37]"
               >
                 <option value="featured">Featured Articles</option>
@@ -327,7 +327,7 @@ function ShopContent() {
                 No Jewellery Found
               </h3>
               <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed mt-2">
-                We couldn't locate articles matching your active search filters. Try loosening filters or click below to refresh.
+                We couldn&apos;t locate articles matching your active search filters. Try loosening filters or click below to refresh.
               </p>
               <button
                 onClick={clearAllFilters}

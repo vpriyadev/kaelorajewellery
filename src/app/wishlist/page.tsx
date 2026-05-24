@@ -126,7 +126,7 @@ export default function WishlistPage() {
             Your Wishlist is Empty
           </h2>
           <p className="text-xs text-gray-400 leading-relaxed mt-2 max-w-xs mx-auto">
-            You haven't stored any articles yet. Explore our designer gold chains, bangles and hoop earrings and build your collection!
+            You haven&apos;t stored any articles yet. Explore our designer gold chains, bangles and hoop earrings and build your collection!
           </p>
           <Link
             href="/shop"

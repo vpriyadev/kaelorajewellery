@@ -35,7 +35,7 @@ export default function AboutPage() {
           </p>
           <div className="w-16 h-[1.5px] bg-[#D4AF37] my-2" />
           <p className="text-xs italic tracking-wide text-gray-400 font-body">
-            "We believe that every woman deserves to shine in timeless splendor every single day, without breaking the bank."
+            &quot;We believe that every woman deserves to shine in timeless splendor every single day, without breaking the bank.&quot;
           </p>
         </div>
 

@@ -39,7 +39,7 @@ export const AuthModal: React.FC = () => {
         setLoading(false);
         return;
       }
-    } catch (err: any) {
+    } catch (err: Error | any) {
       setError(err.message || 'An unexpected authentication error occurred.');
     } finally {
       setLoading(false);
@@ -52,7 +52,7 @@ export const AuthModal: React.FC = () => {
     try {
       await googleLogin();
       handleClose();
-    } catch (err: any) {
+    } catch (err: Error | any) {
       setError(err.message || 'Google Auth unsuccessful.');
     } finally {
       setLoading(false);
@@ -243,7 +243,7 @@ export const AuthModal: React.FC = () => {
           <div className="mt-6 text-center text-xs text-gray-500">
             {mode === 'signin' ? (
               <p>
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <button onClick={() => setMode('signup')} className="text-[#D4AF37] font-semibold hover:underline">
                   Sign Up
                 </button>

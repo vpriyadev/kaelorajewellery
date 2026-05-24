@@ -165,7 +165,7 @@ export default function CheckoutPage() {
       }
 
       triggerToast("✨ Order successfully placed! Enjoy your KAELORA jewellery.", "success");
-    } catch (err: any) {
+    } catch (err: Error | any) {
       triggerToast(err.message || "Failed to place order.", "error");
     } finally {
       setIsSubmitting(false);

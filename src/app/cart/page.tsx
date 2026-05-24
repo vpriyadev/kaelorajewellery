@@ -29,7 +29,7 @@ export default function CartPage() {
     updateCartQuantity(id, newQty);
   };
 
-  const handleToggleWishlistFromCart = (prod: any) => {
+  const handleToggleWishlistFromCart = (prod: Product) => {
     toggleWishlist(prod.id);
     removeFromCart(prod.id);
   };
@@ -71,7 +71,7 @@ export default function CartPage() {
                   </p>
                 ) : (
                   <p className="text-xs mt-1.5 text-gray-300 leading-relaxed font-body">
-                    Buy **3 Products** in total to receive a complimentary luxury gift! You currently have **{profileItemsCount}** past items. By checking out this cart of **{cartItemsCount}** items, you will be only **{Math.max(0, settings.giftGoal - totalBoughtProgress)}** product away!
+                    Buy &quot;3 Products&quot; in total to receive a complimentary luxury gift! You currently have **{profileItemsCount}** past items. By checking out this cart of **{cartItemsCount}** items, you will be only **{Math.max(0, settings.giftGoal - totalBoughtProgress)}** product away!
                   </p>
                 )}
 
@@ -229,7 +229,7 @@ export default function CartPage() {
             Your Cart is Empty
           </h2>
           <p className="text-xs text-gray-400 leading-relaxed mt-2 max-w-xs mx-auto">
-            You haven't added any luxury articles yet. Head back to the showcase and discover tarnish-free daily wear earrings, pendants and traditional filigrees!
+            You haven&apos;t added any luxury articles yet. Head back to the showcase and discover tarnish-free daily wear earrings, pendants and traditional filigrees!
           </p>
           <Link
             href="/shop"

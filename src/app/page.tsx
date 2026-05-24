@@ -436,7 +436,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="text-sm sm:text-base italic text-gray-700 leading-relaxed font-body">
-                "{clientReviews[currentReviewIndex].comment}"
+                &quot;{clientReviews[currentReviewIndex].comment}&quot;
               </p>
               <div>
                 <h4 className="text-base font-serif font-semibold text-[#1A1A1A]">

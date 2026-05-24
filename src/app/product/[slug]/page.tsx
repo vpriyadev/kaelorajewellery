@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { serviceDb, Product, dbSimulator } from '../../../lib/firebase';
 import { useApp } from '../../../context/AppContext';
 import ProductCard from '../../../components/ProductCard';
-import { Heart, ShoppingBag, Truck, Star, Share2, Copy, Send, CheckCircle2, ChevronRight, AlertCircle, Camera } from 'lucide-react';
+import { Heart, ShoppingBag, Truck, Star, Share2, Copy, Send, CheckCircle2, ChevronRight, AlertCircle, Camera, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProductDetailsPage() {
