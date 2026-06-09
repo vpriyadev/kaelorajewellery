@@ -44,7 +44,7 @@ export const Intro: React.FC = () => {
               initial={{ opacity: 0, scale: 0.82 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.6, ease: "easeOut" }}
-              className="relative w-[220px] h-[220px] mb-6 flex items-center justify-center overflow-visible"
+              className="relative w-28 h-28 sm:w-48 sm:h-48 md:w-[220px] md:h-[220px] mb-6 flex items-center justify-center overflow-visible"
             >
               <div className="absolute inset-0 rounded-full bg-[#FAF5EE] shadow-[0_0_120px_rgba(212,175,55,0.18)]" />
               <Image
@@ -52,7 +52,7 @@ export const Intro: React.FC = () => {
                 alt="KAELORA Jewellery"
                 width={220}
                 height={220}
-                className="relative z-10 h-full w-auto object-contain"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <motion.div
                 initial={{ left: '-120%' }}

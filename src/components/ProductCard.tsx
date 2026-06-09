@@ -57,12 +57,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               alt={product.name}
               width={320}
               height={380}
-              className="w-full h-[380px] object-cover transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-[200px] sm:h-[300px] md:h-[380px] object-cover transition-transform duration-700 group-hover:scale-105"
             />
           );
         })()}
         {!((typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url) ) || (typeof product.images[0] === 'string' && product.images[0].includes('logo-burgundy')) ? (
-          <div className="w-full h-[380px] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">No image available</div>
+          <div className="w-full h-[200px] sm:h-[300px] md:h-[380px] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">No image available</div>
         ) : null}
         {/* Quick hover detail overlay */}
         <div className="absolute inset-0 bg-[#1A1A1A]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">

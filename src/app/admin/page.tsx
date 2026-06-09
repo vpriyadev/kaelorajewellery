@@ -279,7 +279,7 @@ export default function AdminDashboardPage() {
         <p className="mt-2 max-w-2xl text-sm text-gray-600">Live store performance, order trends, product momentum, and review activity from Firestore.</p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
         {[
           { label: 'Total Products', value: totals.totalProducts },
           { label: 'Total Orders', value: totals.totalOrders },
@@ -293,7 +293,7 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.8fr_1.2fr] gap-5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.8fr_1.2fr] gap-5 mb-6">
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
             <div className="rounded-2xl bg-[#F8F4EA] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">Live</div>
           </div>
           {revenueHasData ? (
-            <div className="h-[320px]">
+            <div className="h-[200px] sm:h-[300px] md:h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 10, bottom: 0, left: -10, right: 0 }}>
                   <defs>
@@ -333,7 +333,7 @@ export default function AdminDashboardPage() {
             <div className="mt-2 text-lg font-semibold text-[#111827]">Daily order volume</div>
           </div>
           {ordersHasData ? (
-            <div className="h-[320px]">
+            <div className="h-[200px] sm:h-[300px] md:h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 0, left: -14, bottom: 0 }}>
                   <CartesianGrid stroke="#EAE4DA" strokeDasharray="3 3" vertical={false} />

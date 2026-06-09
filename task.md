@@ -1,0 +1,7 @@
+- [ ] Verify hero banner responsiveness on mobile devices
+- [ ] Verify product card image responsiveness on mobile devices
+- [ ] Verify admin revenue and orders chart containers adjust height responsively
+- [ ] Verify admin dashboard grid layouts do not overflow on mobile (add responsive grid classes)
+- [ ] Verify product listing page grid displays correctly on mobile
+- [ ] Run `npm run lint` and `npm run build` to ensure no errors
+- [ ] Commit and push changes
