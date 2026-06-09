@@ -46,14 +46,16 @@ export const Intro: React.FC = () => {
               transition={{ duration: 1.6, ease: "easeOut" }}
               className="relative w-28 h-28 sm:w-48 sm:h-48 md:w-[220px] md:h-[220px] mb-6 flex items-center justify-center overflow-visible"
             >
-              <div className="absolute inset-0 rounded-full bg-[#FAF5EE] shadow-[0_0_120px_rgba(212,175,55,0.18)]" />
-              <Image
-                src="/images/logo-burgundy.jpg"
-                alt="KAELORA Jewellery"
-                width={220}
-                height={220}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-              />
+              <div className="absolute inset-0 rounded-full bg-[#FAF5EE] shadow-[0_0_120px_rgba(212,175,55,0.18)] z-0" />
+              <div className="relative z-10">
+                <Image
+                  src="/images/logo-burgundy.jpg"
+                  alt="KAELORA Jewellery"
+                  width={220}
+                  height={220}
+                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
               <motion.div
                 initial={{ left: '-120%' }}
                 animate={{ left: '120%' }}
