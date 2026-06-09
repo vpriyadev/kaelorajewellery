@@ -1,12 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { serviceAuth, serviceDb, Product, Address, Order } from '../lib/firebase';
 import { uploadToCloudinary } from '../lib/cloudinary';
 import { User as FirebaseUser } from 'firebase/auth';
 
-const ADMIN_EMAIL_WHITELIST = [
+// Keep as fallback, but will be overridden by Firestore admin_emails
+const ADMIN_EMAIL_WHITELIST_FALLBACK = [
   'vishnupriyareddy0711@gmail.com',
   'jashujash1107@gmail.com'
 ];
@@ -109,6 +110,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Auth Interceptor Modal states
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  
+  // Admin emails state (cached from Firestore)
+  const [adminEmails, setAdminEmails] = useState<string[]>([]);
+  const adminEmailsFetchedRef = useRef(false);
 
   const triggerToast = (text: string, type: 'success' | 'error' | 'info' | 'reward' = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -156,8 +161,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // 1. Load System Settings, Reviews, and Products initially
+  // Helper: Check if email is admin (using cached admin emails)
+  const isAdminEmail = (email: string | null | undefined): boolean => {
+    if (!email) return false;
+    const normalized = email.toLowerCase();
+    // Check Firestore admin emails first
+    if (adminEmails.length > 0) {
+      return adminEmails.includes(normalized);
+    }
+    // Fallback to hardcoded list
+    return ADMIN_EMAIL_WHITELIST_FALLBACK.includes(normalized);
+  };
+
+  // 0. Load admin emails and system settings once on mount
   useEffect(() => {
+    // Fetch admin emails
+    if (!adminEmailsFetchedRef.current) {
+      adminEmailsFetchedRef.current = true;
+      serviceDb.getAdminEmails()
+        .then(emails => {
+          setAdminEmails(emails);
+          console.log('[AppContext] Admin emails loaded:', { count: emails.length });
+        })
+        .catch(error => {
+          console.warn('[AppContext] Error loading admin emails, using fallback:', error);
+          setAdminEmails(ADMIN_EMAIL_WHITELIST_FALLBACK);
+        });
+    }
+
     serviceDb.getSettings()
       .then(setSettings)
       .catch((error) => {
@@ -190,10 +221,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // 2. Watch Auth State Changes
   useEffect(() => {
     const unsubscribe = serviceAuth.onStateChanged((currentUser) => {
-      const isWhitelistedEmail = !!currentUser?.email && ADMIN_EMAIL_WHITELIST.includes(currentUser.email.toLowerCase());
-      const emailVerified = currentUser?.emailVerified === undefined ? true : currentUser.emailVerified;
-      // Determine admin: explicit role 'admin' OR whitelisted email
-      const isAdmin = (currentUser?.role === 'admin') || (isWhitelistedEmail && emailVerified);
+      // Check if user is admin based on role from Firestore (set during login)
+      const isAdmin = currentUser?.role === 'admin';
 
       // Preserve role if provided by session
       const enrichedUser = currentUser ? { ...currentUser, role: currentUser.role ?? undefined, isAdmin } : null;
@@ -207,6 +236,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (isAdmin) {
         clearUserState();
+        // Redirect admin to dashboard
+        if (router && typeof window !== 'undefined') {
+          router.push('/admin/dashboard');
+        }
       } else {
         // Sync cart & wishlist from database for normal users only
         setWishlist(currentUser.wishlist || []);
@@ -229,7 +262,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Trigger pending action if any
-      if (pendingAction) {
+      if (pendingAction && !isAdmin) {
         setTimeout(() => {
           pendingAction();
           setPendingAction(null);
@@ -239,22 +272,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     return () => unsubscribe();
-  }, [pendingAction]);
+  }, [pendingAction, router]);
 
   // Auth Operations
   const login = async (email: string, pass: string) => {
-    await serviceAuth.login(email, pass);
-    triggerToast("Welcome back to KAELORA Jewellery!", "success");
+    try {
+      await serviceAuth.login(email, pass);
+      triggerToast("Welcome back to KAELORA Jewellery!", "success");
+    } catch (error: any) {
+      const message = sanitizeError(error);
+      triggerToast(message, "error");
+      throw error;
+    }
   };
 
   const signUp = async (email: string, pass: string, name: string) => {
-    await serviceAuth.signUp(email, pass, name);
-    triggerToast("Account created successfully! Welcome to Kaelora.", "success");
+    try {
+      await serviceAuth.signUp(email, pass, name);
+      triggerToast("Account created successfully! Welcome to Kaelora.", "success");
+    } catch (error: any) {
+      const message = sanitizeError(error);
+      triggerToast(message, "error");
+      throw error;
+    }
   };
 
   const googleLogin = async () => {
-    await serviceAuth.googleLogin();
-    triggerToast("Successfully signed in with Google!", "success");
+    try {
+      await serviceAuth.googleLogin();
+      triggerToast("Successfully signed in with Google!", "success");
+    } catch (error: any) {
+      const message = sanitizeError(error);
+      triggerToast(message, "error");
+      throw error;
+    }
   };
 
   const logout = async (options: { silent?: boolean } = {}) => {

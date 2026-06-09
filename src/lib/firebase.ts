@@ -636,6 +636,25 @@ class DatabaseSimulator {
 
 export const dbSimulator = new DatabaseSimulator();
 
+// Helper: Check if email is admin (fetch from Firestore settings)
+async function isEmailAdmin(email: string): Promise<boolean> {
+  if (!email) return false;
+  try {
+    if (realDb) {
+      const snap = await getDoc(doc(realDb, 'settings', 'admin_emails'));
+      if (snap.exists()) {
+        const data = snap.data() as any;
+        const adminEmails: string[] = (data?.emails || data?.adminEmails || []).map((e: string) => e.toLowerCase());
+        return adminEmails.includes(email.toLowerCase());
+      }
+    }
+    return false;
+  } catch (error) {
+    console.warn('[Firebase] Error checking admin status:', error);
+    return false;
+  }
+}
+
 // ----------------------------------------------------
 // DUAL-MODE SERVICE LAYER EXPORTS
 // ----------------------------------------------------
@@ -706,11 +725,16 @@ export const serviceAuth = {
     if (realAuth && realDb) {
       const cred = await createUserWithEmailAndPassword(realAuth, email, password);
       await sendEmailVerification(cred.user);
+      
+      // Check if email is admin
+      const isAdmin = await isEmailAdmin(email);
+      const userRole = isAdmin ? 'admin' : 'user';
+      
       // Create user document in Firestore with Kaelora specific fields
       const userDoc = {
         uid: cred.user.uid,
         email: email,
-        role: "user",
+        role: userRole,
         createdAt: serverTimestamp()
       };
       
@@ -720,7 +744,7 @@ export const serviceAuth = {
         email,
         fullName,
         phone: '',
-        role: "user",
+        role: userRole,
         addressList: [],
         wishlist: [],
         cartItems: [],
@@ -733,7 +757,7 @@ export const serviceAuth = {
       // set client cookie so server middleware can read role on subsequent requests
       if (typeof window !== 'undefined') {
         try {
-          const session = { uid: cred.user.uid, email, displayName: fullName, role: 'user' };
+          const session = { uid: cred.user.uid, email, displayName: fullName, role: userRole };
           document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`;
         } catch (e) {}
       }
@@ -780,14 +804,24 @@ export const serviceAuth = {
       
       // If user document doesn't exist, create it
       if (!userDocSnap.exists()) {
+        const isAdmin = await isEmailAdmin(email);
         const userDoc = {
           uid: cred.user.uid,
           email: cred.user.email,
-          role: "user",
+          role: isAdmin ? "admin" : "user",
           createdAt: serverTimestamp()
         };
         await setDoc(userDocRef, userDoc);
+      } else {
+        // Check if user needs admin role update
+        const currentRole = (userDocSnap.data() as any).role;
+        const isAdmin = await isEmailAdmin(email);
+        if (isAdmin && currentRole !== 'admin') {
+          await updateDoc(userDocRef, { role: 'admin' });
+          console.log('[Firebase] Admin role updated for:', email);
+        }
       }
+      
       // ensure cookie contains role from user document
       try {
         const refreshed = await getDoc(userDocRef);
@@ -845,6 +879,7 @@ export const serviceAuth = {
       
       try {
         const docSnap = await getDoc(docRef);
+        const isAdmin = await isEmailAdmin(cred.user.email || '');
 
         if (!docSnap.exists()) {
           // Create new user document with real Google account data
@@ -853,7 +888,7 @@ export const serviceAuth = {
             email: cred.user.email,
             displayName: cred.user.displayName,
             photoURL: cred.user.photoURL,
-            role: "user",
+            role: isAdmin ? "admin" : "user",
             phone: '',
             addressList: [],
             wishlist: [],
@@ -864,7 +899,7 @@ export const serviceAuth = {
           };
           try {
             await setDoc(docRef, profile);
-            console.log('[Firestore] New user document created:', { uid: cred.user.uid, email: cred.user.email });
+            console.log('[Firestore] New user document created:', { uid: cred.user.uid, email: cred.user.email, role: profile.role });
           } catch (writeError: any) {
             console.error('[Firestore] Error creating user document:', {
               uid: cred.user.uid,
@@ -877,12 +912,21 @@ export const serviceAuth = {
           }
         } else {
           // Update existing user with latest Google profile info
-            try {
-            await setDoc(docRef, {
-              displayName: cred.user.displayName,
-              photoURL: cred.user.photoURL,
-              lastLoginAt: serverTimestamp()
-            }, { merge: true });
+          const currentRole = (docSnap.data() as any).role;
+          const updateData: any = {
+            displayName: cred.user.displayName,
+            photoURL: cred.user.photoURL,
+            lastLoginAt: serverTimestamp()
+          };
+          
+          // Update role if needed
+          if (isAdmin && currentRole !== 'admin') {
+            updateData.role = 'admin';
+            console.log('[Firebase] Admin role updated for:', cred.user.email);
+          }
+          
+          try {
+            await setDoc(docRef, updateData, { merge: true });
             console.log('[Firestore] Existing user document merged with latest Google profile:', { uid: cred.user.uid });
           } catch (updateError: any) {
             console.error('[Firestore] Error merging user document:', {
@@ -1819,6 +1863,48 @@ console.log("EMAIL RECIPIENT:", orderData.email);
         clearInterval(interval);
         if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
       };
+    }
+  },
+
+  // Admin Email Management
+  getAdminEmails: async (): Promise<string[]> => {
+    if (realDb) {
+      try {
+        const snap = await getDoc(doc(realDb, 'settings', 'admin_emails'));
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          return (data?.emails || data?.adminEmails || []).map((e: string) => e.toLowerCase());
+        }
+        return [];
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching admin emails:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings'
+        });
+        return [];
+      }
+    } else {
+      return [];
+    }
+  },
+
+  updateAdminEmails: async (emails: string[]): Promise<void> => {
+    if (realDb) {
+      try {
+        await setDoc(doc(realDb, 'settings', 'admin_emails'), { 
+          emails: emails.map(e => e.toLowerCase()),
+          updatedAt: serverTimestamp()
+        });
+        console.log('[Firestore] Admin emails updated:', { count: emails.length });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating admin emails:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings'
+        });
+        throw error;
+      }
     }
   },
 
