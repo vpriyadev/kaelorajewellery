@@ -8,7 +8,7 @@ import { User, MapPin, Package, Gift, Trash2, ShieldCheck, Award, Edit2, X } fro
 import { validateAddressForm, formatPhone, formatPincode, parseSafeDate } from '../../lib/validation';
 
 export default function AccountPage() {
-  const { user, loadingAuth, authModalOpen, logout, settings, setAuthModalOpen, triggerToast, deleteAddress, updateAddress, addAddress, cancelOrder, justSignedOut } = useApp();
+  const { user, loadingAuth, logout, settings, setAuthModalOpen, triggerToast, deleteAddress, updateAddress, addAddress, cancelOrder } = useApp();
   const router = useRouter();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
