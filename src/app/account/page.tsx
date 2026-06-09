@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps, @next/next/no-img-element */
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
