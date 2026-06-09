@@ -6,19 +6,47 @@ import { Mail, Lock, User, X, ChevronRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AuthModal: React.FC = () => {
-  const { authModalOpen, setAuthModalOpen, login, signUp, googleLogin } = useApp();
+  const { authModalOpen, setAuthModalOpen, login, signUp, googleLogin, sanitizeError } = useApp();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validateEmail = (value: string) => emailPattern.test(value.trim());
+  const validatePassword = (value: string) => value.length >= 6;
+  const emailValid = validateEmail(email);
+  const passwordValid = mode === 'forgot' ? true : validatePassword(password);
+  const fullNameValid = mode === 'signup' ? fullName.trim().length > 0 : true;
+  const canSubmit = emailValid && passwordValid && fullNameValid && !loading;
 
   if (!authModalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!emailValid) {
+      setEmailError('Enter a valid email address.');
+      return;
+    }
+
+    if (mode !== 'forgot' && !passwordValid) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    if (mode === 'signup' && !fullNameValid) {
+      setError('Full Name is required!');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -26,11 +54,6 @@ export const AuthModal: React.FC = () => {
         await login(email, password);
         handleClose();
       } else if (mode === 'signup') {
-        if (!fullName.trim()) {
-          setError('Full Name is required!');
-          setLoading(false);
-          return;
-        }
         await signUp(email, password, fullName);
         handleClose();
       } else {
@@ -40,7 +63,7 @@ export const AuthModal: React.FC = () => {
         return;
       }
     } catch (err: Error | any) {
-      setError(err.message || 'An unexpected authentication error occurred.');
+      setError(sanitizeError(err));
     } finally {
       setLoading(false);
     }
@@ -53,7 +76,7 @@ export const AuthModal: React.FC = () => {
       await googleLogin();
       handleClose();
     } catch (err: Error | any) {
-      setError(err.message || 'Google Auth unsuccessful.');
+      setError(sanitizeError(err));
     } finally {
       setLoading(false);
     }
@@ -65,9 +88,12 @@ export const AuthModal: React.FC = () => {
     setPassword('');
     setFullName('');
     setError('');
+    setEmailError('');
+    setPasswordError('');
+    setEmailTouched(false);
+    setPasswordTouched(false);
     setMode('signin');
   };
-
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
@@ -149,10 +175,31 @@ export const AuthModal: React.FC = () => {
                   required
                   placeholder="name@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#EDE6DA] bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-all"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setEmail(value);
+                    setEmailTouched(true);
+                    setError('');
+
+                    if (!value.trim()) {
+                      setEmailError('Email is required.');
+                    } else if (!validateEmail(value)) {
+                      setEmailError('Enter a valid email address.');
+                    } else {
+                      setEmailError('');
+                    }
+                  }}
+                  onBlur={() => setEmailTouched(true)}
+                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-all ${
+                    emailTouched && emailError
+                      ? 'border-red-300 focus:border-red-500'
+                      : 'border-[#EDE6DA] focus:border-[#D4AF37]'
+                  }`}
                 />
               </div>
+              {emailTouched && emailError && (
+                <p className="text-[11px] text-red-700 mt-1">{emailError}</p>
+              )}
             </div>
 
             {mode !== 'forgot' && (
@@ -176,18 +223,41 @@ export const AuthModal: React.FC = () => {
                     required
                     placeholder="••••••••"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#EDE6DA] bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-all"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPassword(value);
+                      setPasswordTouched(true);
+                      setError('');
+
+                      if (!validatePassword(value)) {
+                        setPasswordError('Password must be at least 6 characters');
+                      } else {
+                        setPasswordError('');
+                      }
+                    }}
+                    onBlur={() => setPasswordTouched(true)}
+                    className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-all ${
+                      passwordTouched && passwordError
+                        ? 'border-red-300 focus:border-red-500'
+                        : 'border-[#EDE6DA] focus:border-[#D4AF37]'
+                    }`}
                   />
                 </div>
+                <p className="text-[11px] text-gray-500">Minimum 6 characters</p>
+                {passwordTouched && passwordError && (
+                  <p className="text-[11px] text-red-700 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {passwordError}
+                  </p>
+                )}
               </div>
             )}
 
             {/* Premium CTA Button */}
             <button
               type="submit"
-              disabled={loading}
-              className="mt-2 w-full py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] font-semibold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-1 group relative overflow-hidden"
+              disabled={!canSubmit}
+              className="mt-2 w-full py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] font-semibold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-1 group relative overflow-hidden disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-[#EDE6DA]/40 border-t-[#EDE6DA] rounded-full animate-spin" />
@@ -244,21 +314,51 @@ export const AuthModal: React.FC = () => {
             {mode === 'signin' ? (
               <p>
                 Don&apos;t have an account?{' '}
-                <button onClick={() => setMode('signup')} className="text-[#D4AF37] font-semibold hover:underline">
+                <button
+                  onClick={() => {
+                    setMode('signup');
+                    setError('');
+                    setEmailError('');
+                    setPasswordError('');
+                    setEmailTouched(false);
+                    setPasswordTouched(false);
+                  }}
+                  className="text-[#D4AF37] font-semibold hover:underline"
+                >
                   Sign Up
                 </button>
               </p>
             ) : mode === 'signup' ? (
               <p>
                 Already have an account?{' '}
-                <button onClick={() => setMode('signin')} className="text-[#D4AF37] font-semibold hover:underline">
+                <button
+                  onClick={() => {
+                    setMode('signin');
+                    setError('');
+                    setEmailError('');
+                    setPasswordError('');
+                    setEmailTouched(false);
+                    setPasswordTouched(false);
+                  }}
+                  className="text-[#D4AF37] font-semibold hover:underline"
+                >
                   Sign In
                 </button>
               </p>
             ) : (
               <p>
                 Return to{' '}
-                <button onClick={() => setMode('signin')} className="text-[#D4AF37] font-semibold hover:underline">
+                <button
+                  onClick={() => {
+                    setMode('signin');
+                    setError('');
+                    setEmailError('');
+                    setPasswordError('');
+                    setEmailTouched(false);
+                    setPasswordTouched(false);
+                  }}
+                  className="text-[#D4AF37] font-semibold hover:underline"
+                >
                   Sign In
                 </button>
               </p>

@@ -60,11 +60,7 @@ export const Navbar: React.FC = () => {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-serif ${
-          scrolled 
-            ? 'bg-[#F8F5F0]/95 backdrop-blur-md shadow-md py-3' 
-            : 'bg-transparent py-5'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-serif bg-[#F8F5F0]/95 backdrop-blur-md ${scrolled ? 'shadow-md' : ''}`}
       >
         {/* Announcement Bar embedded when not scrolled */}
         {!scrolled && (
@@ -79,37 +75,39 @@ export const Navbar: React.FC = () => {
           </div>
         )}
 
-        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ${!scrolled ? 'mt-6' : 'mt-0'}`}>
+        <div className="max-w-7xl mx-auto px-1 sm:px-3 lg:px-4 flex items-center justify-between py-3 sm:py-4 lg:py-5">
           
           {/* LEFT: Branding Brand Logo */}
-          <Link href="/" className="flex items-center gap-3 group h-auto">
-            <Image
-              src="/images/logo-burgundy.jpg"
-              alt="KAELORA Jewellery"
-              width={60}
-              height={60}
-              className="h-[40px] sm:h-[50px] md:h-[55px] lg:h-[60px] w-auto object-contain flex-shrink-0"
-            />
-            <div className="hidden md:flex flex-col justify-center">
-              <span className="text-lg sm:text-xl font-bold tracking-[0.16em] text-[#1A1A1A] uppercase group-hover:text-[#D4AF37] transition-colors duration-300">
-                Kaelora
-              </span>
-              <span className="text-[8px] tracking-[0.3em] font-body text-[#4B352A] uppercase -mt-1">
-                Jewellery
-              </span>
-            </div>
-          </Link>
+          <div className="flex items-center h-full flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 group min-w-fit overflow-visible">
+              <Image
+                src="/images/logo-burgundy.jpg"
+                alt="KAELORA Jewellery"
+                width={96}
+                height={96}
+                className="h-auto max-h-16 w-auto object-contain flex-shrink-0"
+              />
+              <div className="hidden md:flex flex-col justify-center items-center min-w-fit overflow-visible whitespace-nowrap ml-0.5">
+                <span className="text-2xl sm:text-3xl font-bold tracking-[0.12em] text-[#1A1A1A] uppercase group-hover:text-[#D4AF37] transition-colors duration-300 leading-none">
+                  KAELORA
+                </span>
+                <span className="text-xs sm:text-sm font-bold tracking-[0.2em] font-body text-[#4B352A] uppercase leading-none">
+                  JEWELLERY
+                </span>
+              </div>
+            </Link>
+          </div>
 
           {/* CENTER: Premium Navigation Container */}
-          <div className="hidden md:flex items-center px-0.5">
-            <nav className="flex items-center gap-1 sm:gap-2 lg:gap-3 px-6 py-3 bg-white/40 backdrop-blur-sm border border-[#D4AF37]/20 rounded-full shadow-lg shadow-[#D4AF37]/5 hover:shadow-[#D4AF37]/10 transition-all duration-300">
+          <div className="hidden md:flex flex-1 justify-center items-center">
+            <nav className="flex items-center gap-1 sm:gap-2 lg:gap-3 px-4 py-3 bg-white/95 backdrop-blur-sm border border-[#D4AF37]/20 rounded-full shadow-lg shadow-[#D4AF37]/5 hover:shadow-[#D4AF37]/10 transition-all duration-300">
               {navLinks.map((link) => {
                 const active = pathname === link.href || (link.href !== '/' && pathname.includes(link.href.split('?')[0]));
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`relative px-3 py-1.5 text-xs sm:text-sm font-medium font-body uppercase tracking-[0.12em] transition-all duration-300 rounded-full ${
+                    className={`relative px-3 py-1.5 leading-none text-xs sm:text-sm font-medium font-body uppercase tracking-[0.12em] transition-all duration-300 rounded-full ${
                       active 
                         ? 'text-[#D4AF37] font-semibold bg-[#D4AF37]/8' 
                         : 'text-[#1A1A1A] hover:text-[#D4AF37] hover:bg-[#D4AF37]/5'
@@ -152,7 +150,7 @@ export const Navbar: React.FC = () => {
                     {user.isAdmin ? 'Admin Panel' : 'My Dashboard'}
                   </Link>
                   <button
-                    onClick={logout}
+                    onClick={() => logout()}
                     className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 hover:bg-red-50 rounded-lg transition-colors font-body"
                   >
                     <LogOut className="w-3.5 h-3.5" />
@@ -202,7 +200,7 @@ export const Navbar: React.FC = () => {
               href="https://www.instagram.com/kaelora.jewellery"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-full hover:text-[#D4AF37] transition-colors duration-300"
+              className="hidden sm:inline-flex p-2 rounded-full hover:text-[#D4AF37] transition-colors duration-300"
               aria-label="Instagram"
             >
               <Instagram className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />
@@ -211,7 +209,7 @@ export const Navbar: React.FC = () => {
               href="https://www.facebook.com/profile.php?id=61590032346143"
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-full hover:text-[#D4AF37] transition-colors duration-300"
+              className="hidden sm:inline-flex p-2 rounded-full hover:text-[#D4AF37] transition-colors duration-300"
               aria-label="Facebook"
             >
               <Facebook className="w-5 h-5 sm:w-[22px] sm:h-[22px]" />

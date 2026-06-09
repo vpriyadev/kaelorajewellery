@@ -3,6 +3,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { Product } from '../../lib/firebase';
+import { normalizeSlug } from '../../lib/slugUtils';
 import { ShoppingBag, ArrowRight, Trash2, Heart, Gift, Award } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,8 +13,12 @@ export default function CartPage() {
 
   // Pricing calculations
   const subtotal = cart.reduce((acc, item) => acc + (item.product.discountPrice * item.quantity), 0);
+  const productDeliveryFee = cart.reduce((acc, item) => {
+    return item.product.freeDelivery ? acc : acc + ((item.product.deliveryFee || 0) * item.quantity);
+  }, 0);
   const shippingCharge = subtotal >= settings.freeShippingLimit || !settings.enableFreeShipping ? 0 : settings.standardShippingCharge;
-  const totalAmount = subtotal + shippingCharge;
+  const shippingAndDelivery = shippingCharge + productDeliveryFee;
+  const totalAmount = subtotal + shippingAndDelivery;
 
   // Reward Progress calculations
   const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -97,7 +102,7 @@ export default function CartPage() {
                   {/* Thumbnail frame */}
                   <div className="w-20 h-20 rounded-xl overflow-hidden border border-[#EDE6DA] bg-gray-50 flex-shrink-0">
                     <Image 
-                      src={item.product.images[0]} 
+                      src={typeof item.product.images[0] === 'string' ? item.product.images[0] : item.product.images[0]?.url} 
                       alt={item.product.name} 
                       width={80} 
                       height={80} 
@@ -111,7 +116,7 @@ export default function CartPage() {
                       <span className="text-[9px] uppercase tracking-widest text-[#D4AF37] font-semibold">
                         {item.product.category}
                       </span>
-                      <Link href={`/product/${item.product.slug}`} className="block">
+                      <Link href={`/product/${normalizeSlug(item.product.slug)}`} className="block">
                         <h4 className="text-sm font-semibold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors">
                           {item.product.name}
                         </h4>
@@ -187,19 +192,30 @@ export default function CartPage() {
                   <span>Cart Subtotal</span>
                   <span className="font-semibold text-[#1A1A1A]">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
+                {productDeliveryFee > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span>Product Delivery Fee</span>
+                    <span className="font-semibold text-[#1A1A1A]">₹{productDeliveryFee.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
                 
-                {/* Shipping charge calculator display */}
                 <div className="flex justify-between items-center">
-                  <span>Shipping & Delivery</span>
+                  <span>Shipping Fee</span>
                   <span className={`font-semibold ${shippingCharge === 0 ? 'text-emerald-700 font-bold' : 'text-[#1A1A1A]'}`}>
-                    {shippingCharge === 0 ? 'FREE DELIVERY' : `₹${shippingCharge}`}
+                    {shippingCharge === 0 ? 'Free' : `₹${shippingCharge}`}
                   </span>
+                </div>
+
+                {/* Shipping charge calculator display */}
+                <div className="flex justify-between items-center border-t border-[#EDE6DA] pt-2 mt-1">
+                  <span className="font-semibold text-[#1A1A1A]">Shipping & Delivery</span>
+                  <span className="font-semibold text-[#1A1A1A]">₹{shippingAndDelivery.toLocaleString('en-IN')}</span>
                 </div>
 
                 {/* Free shipping threshold alert */}
                 {shippingCharge > 0 && (
                   <div className="p-3 bg-[#F8F5F0] border border-[#EDE6DA] rounded-xl text-[10px] text-amber-700 leading-normal font-semibold">
-                    💡 **Tip:** Add only **₹{(settings.freeShippingLimit - subtotal).toLocaleString('en-IN')}** more worth of articles to unlock **FREE SHIPPING!**
+                    Add ₹{(settings.freeShippingLimit - subtotal).toLocaleString('en-IN')} more to get FREE shipping.
                   </div>
                 )}
               </div>

@@ -4,72 +4,211 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { serviceDb, Order, Address } from '../../lib/firebase';
 import { useRouter } from 'next/navigation';
-import { User, MapPin, Package, Gift, Trash2, ShieldCheck, Award } from 'lucide-react';
-import Image from 'next/image';
+import { User, MapPin, Package, Gift, Trash2, ShieldCheck, Award, Edit2, X } from 'lucide-react';
+import { validateAddressForm, formatPhone, formatPincode, parseSafeDate } from '../../lib/validation';
 
 export default function AccountPage() {
-  const { user, logout, settings, setAuthModalOpen, triggerToast, deleteAddress } = useApp();
+  const { user, loadingAuth, authModalOpen, logout, settings, setAuthModalOpen, triggerToast, deleteAddress, updateAddress, addAddress, cancelOrder, justSignedOut } = useApp();
   const router = useRouter();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [productLookup, setProductLookup] = useState<Record<string, string>>({});
   const [loadingAddr, setLoadingAddr] = useState(true);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
   // Active section tab
   const [activeTab, setActiveTab] = useState<'profile' | 'orders' | 'addresses'>('profile');
 
+  // Address form modal state
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    country: 'India',
+    isDefault: false
+  });
+
   // Load addresses & orders
   useEffect(() => {
-    if (user) {
-      setLoadingAddr(true);
-      serviceDb.getAddresses(user.uid).then((addr) => {
-        setAddresses(addr);
-        setLoadingAddr(false);
-      });
+    if (!user?.uid) return;
+    
+    setLoadingAddr(true);
+    serviceDb.getAddresses(user.uid).then((addr) => {
+      setAddresses(addr);
+      setLoadingAddr(false);
+    });
 
-      setLoadingOrders(true);
-      serviceDb.getOrders(user.uid).then((ord) => {
-        // Sort orders by date descending
-        const sorted = ord.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setOrders(sorted);
-        setLoadingOrders(false);
+    setLoadingOrders(true);
+    serviceDb.getOrders(user.uid).then((ord) => {
+      // Sort orders by date descending
+      const sorted = ord.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setOrders(sorted);
+      setLoadingOrders(false);
+    });
+
+    serviceDb.getProducts().then((products) => {
+      const lookup: Record<string, string> = {};
+      products.forEach((product) => {
+        lookup[product.id] = product.name || '';
       });
-    }
+      setProductLookup(lookup);
+    });
   }, [user]);
 
   const handleDeleteAddr = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
     try {
       await deleteAddress(id);
       setAddresses(prev => prev.filter(a => a.id !== id));
-      triggerToast("Address successfully removed from book.", "success");
+      triggerToast("Address deleted successfully.", "success");
     } catch {
       triggerToast("Failed to delete address.", "error");
     }
   };
 
+  const openAddressModal = (addressToEdit?: Address) => {
+    if (addressToEdit) {
+      setEditingAddressId(addressToEdit.id);
+      setFormData({
+        fullName: addressToEdit.fullName || '',
+        phone: addressToEdit.phone || '',
+        addressLine1: addressToEdit.addressLine1 || addressToEdit.addressLine || '',
+        addressLine2: addressToEdit.addressLine2 || '',
+        city: addressToEdit.city || '',
+        state: addressToEdit.state || '',
+        pincode: addressToEdit.pincode || '',
+        country: addressToEdit.country || 'India',
+        isDefault: addressToEdit.isDefault || false
+      });
+    } else {
+      setEditingAddressId(null);
+      setFormData({
+        fullName: '',
+        phone: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        pincode: '',
+        country: 'India',
+        isDefault: false
+      });
+    }
+    setFormErrors({});
+    setShowAddressModal(true);
+  };
+
+  const closeAddressModal = () => {
+    setShowAddressModal(false);
+    setEditingAddressId(null);
+    setFormData({
+      fullName: '',
+      phone: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      pincode: '',
+      country: 'India',
+      isDefault: false
+    });
+    setFormErrors({});
+  };
+
+  const handleFormChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    const validation = validateAddressForm({
+      fullName: formData.fullName,
+      phone: formData.phone,
+      addressLine1: formData.addressLine1,
+      city: formData.city,
+      state: formData.state,
+      pincode: formData.pincode,
+      country: formData.country
+    });
+
+    if (!validation.valid) {
+      setFormErrors(validation.errors);
+      return;
+    }
+
+    try {
+      const addressData = {
+        fullName: formData.fullName,
+        phone: formatPhone(formData.phone),
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2,
+        city: formData.city,
+        state: formData.state,
+        pincode: formatPincode(formData.pincode),
+        country: formData.country,
+        isDefault: formData.isDefault
+      };
+
+      if (editingAddressId) {
+        // Update existing address
+        await updateAddress(editingAddressId, addressData);
+        setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, ...addressData } : a));
+      } else {
+        // Add new address
+        const newAddr = await addAddress(addressData);
+        setAddresses(prev => [...prev, newAddr]);
+      }
+      closeAddressModal();
+    } catch (error) {
+      triggerToast('Failed to save address.', 'error');
+    }
+  };
+
   /* ----------------------------------------------------
-      GUEST LOCKSCREEN INTERCEPT
+      GUEST AUTH INTERCEPT
+      - Render a gentle Sign In lockscreen instead of forcing modals or returning null
       ---------------------------------------------------- */
+  if (loadingAuth) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-[#D4AF37]/40 border-t-[#D4AF37] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   if (!user) {
     return (
       <div className="max-w-md mx-auto px-6 py-24 font-body text-center">
         <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6 border border-[#EDE6DA]">
           <ShieldCheck className="w-7 h-7 text-[#D4AF37]" />
         </div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] font-semibold">User Dashboard</span>
+        <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] font-semibold">Secure Account Gateway</span>
         <h2 className="text-2xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
-          Dashboard Locked
+          Please Sign In
         </h2>
         <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed mt-3">
-          Please log in to your account to review saved items, address books, reward status progress, and track dispatch order details.
+          To view your order history, manage saved addresses, and track your loyalty progress, please sign in to your account.
         </p>
-
         <button
           onClick={() => setAuthModalOpen(true)}
           className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
         >
-          Login / Register Now
+          Sign In / Register
         </button>
       </div>
     );
@@ -148,7 +287,7 @@ export default function AccountPage() {
 
           {/* Logout Button */}
           <button
-            onClick={logout}
+            onClick={() => logout()}
             className="w-full text-left py-2.5 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider text-red-700 hover:bg-red-50 transition-colors mt-4 border border-transparent hover:border-red-100"
           >
             Sign Out
@@ -238,9 +377,11 @@ export default function AccountPage() {
               ) : orders.length > 0 ? (
                 <div className="flex flex-col gap-8">
                   {orders.map((ord) => {
+                    const status = ord.status || ord.orderStatus || 'processing';
                     const statusColors = 
-                      ord.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                      ord.status === 'shipped' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                      status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                      status === 'shipped' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                      status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-100' :
                       'bg-amber-50 text-amber-700 border-amber-100';
                     
                     return (
@@ -257,7 +398,7 @@ export default function AccountPage() {
                           
                           {/* Order Status */}
                           <span className={`text-[10px] uppercase font-bold tracking-wider px-3.5 py-1 rounded-full border self-start ${statusColors}`}>
-                            {ord.status}
+                            {status}
                           </span>
                         </div>
 
@@ -268,15 +409,15 @@ export default function AccountPage() {
                           <div
                             className="absolute top-1/2 left-4 h-0.5 bg-[#D4AF37] -translate-y-1/2 z-0 transition-all duration-500"
                             style={{
-                              width: ord.status === 'delivered' ? '100%' : ord.status === 'shipped' ? '50%' : '0%'
+                              width: status === 'delivered' ? '100%' : status === 'shipped' ? '50%' : '0%'
                             }}
                           />
                           
                           {/* Status Nodes */}
                           {['processing', 'shipped', 'delivered'].map((step, idx) => {
-                            const active = ord.status === step || 
+                            const active = status === step || 
                               (step === 'processing') || 
-                              (step === 'shipped' && ord.status === 'delivered');
+                              (step === 'shipped' && status === 'delivered');
                             
                             return (
                               <div key={step} className="flex flex-col items-center gap-1.5 relative z-10">
@@ -299,38 +440,88 @@ export default function AccountPage() {
 
                         {/* List products in order */}
                         <div className="flex flex-col gap-3 py-2 border-b border-[#EDE6DA]/40">
-                          {ord.items.map((item, i) => (
-                            <div key={i} className="flex items-center gap-3.5 text-xs">
-                              <Image 
-                                src={item.productImage} 
-                                alt={item.productName} 
-                                width={40} 
-                                height={40} 
-                                className="w-10 h-10 rounded-lg object-cover border border-gray-100" 
-                              />
-                              <div className="flex-grow min-w-0">
-                                <h4 className="font-semibold text-gray-800 truncate">{item.productName}</h4>
-                                <span className="text-[10px] text-gray-400">Quantity: {item.quantity}</span>
-                              </div>
-                              <span className="font-bold text-[#1A1A1A]">₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
+                          {(() => {
+                            console.log("Order:", ord);
+                            console.log("Items:", ord.items);
+                            const orderItems = Array.isArray(ord.items) && ord.items.length > 0 ? ord.items : Array.isArray(ord.products) ? ord.products : [];
+                            if (orderItems.length === 0) return null;
+                            return orderItems.map((item: any, i: number) => {
+                              const itemName = item?.productName || item?.name || item?.title || item?.productTitle || item?.product_name || productLookup[item?.productId] || productLookup[item?.id] || item?.productId || item?.id || '';
+                              const itemQty = item?.quantity || 1;
+                              const itemPrice = item?.price || 0;
+                              return (
+                                <div key={i} className="flex items-center gap-3.5 text-xs">
+                                  <div className="flex-grow min-w-0">
+                                    <h4 className="font-semibold text-gray-800 truncate">{itemName}</h4>
+                                    <span className="text-[10px] text-gray-400">Quantity: {itemQty}</span>
+                                  </div>
+                                  <span className="font-bold text-[#1A1A1A] whitespace-nowrap">₹{(itemPrice * itemQty).toLocaleString('en-IN')}</span>
+                                </div>
+                              );
+                            });
+                          })()}
+                          {!ord.items?.length && !ord.products?.length && (
+                            <div className="text-center py-4 text-gray-400 italic text-[10px]">
+                              No product details available for this order.
                             </div>
-                          ))}
+                          )}
                         </div>
 
                         {/* Shipping details and totals footer */}
                         <div className="flex flex-col sm:flex-row justify-between text-xs text-gray-500 gap-4 mt-1">
                           <div>
                             <span className="font-bold text-[#1A1A1A] uppercase tracking-wider text-[10px] block mb-1">Shipping Recipient:</span>
-                            <p className="font-semibold">{ord.shippingAddress.fullName}</p>
-                            <p className="mt-0.5 text-gray-400 font-body text-[10px] leading-relaxed max-w-xs">{ord.shippingAddress.addressLine}, {ord.shippingAddress.city}, {ord.shippingAddress.state} - {ord.shippingAddress.pincode}</p>
+                            {ord.shippingAddress ? (
+                              <>
+                                <p className="font-semibold">{ord.shippingAddress?.fullName || 'N/A'}</p>
+                                <p className="mt-0.5 text-gray-400 font-body text-[10px] leading-relaxed max-w-xs">
+                                  {ord.shippingAddress?.addressLine || 'Address not available'}, {ord.shippingAddress?.city || ''}, {ord.shippingAddress?.state || ''} - {ord.shippingAddress?.pincode || ''}
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-gray-400 italic text-[10px]">Shipping address not available</p>
+                            )}
+                            {(() => {
+                              const cancelDate = parseSafeDate(ord.cancelledAt);
+                              return cancelDate ? (
+                                <p className="text-xs text-red-600 font-semibold mt-2">Cancelled on: {cancelDate.toLocaleString()}</p>
+                              ) : null;
+                            })()}
                           </div>
                           
                           <div className="sm:text-right flex flex-col sm:justify-end">
                             <span className="text-gray-400 font-semibold block mb-0.5">Grand Total Amount Paid:</span>
-                            <span className="font-bold font-serif text-[#1A1A1A] text-sm">₹{ord.totalAmount.toLocaleString('en-IN')}</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">via {ord.paymentMethod}</span>
+                            <span className="font-bold font-serif text-[#1A1A1A] text-sm">₹{((ord.totalAmount || 0) as number).toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">via {ord.paymentMethod || 'Unknown'}</span>
+                            {ord.cancelledBy && (
+                              <span className="text-[10px] font-bold text-red-600 mt-1 block">Cancelled by: {ord.cancelledBy.name || ord.cancelledBy.id} ({ord.cancelledBy.role || 'user'})</span>
+                            )}
                           </div>
                         </div>
+
+                        {/* Cancel button (only for eligible statuses) */}
+                        {(status === 'processing') && (
+                          <div className="flex justify-end mt-3">
+                            <button
+                              onClick={async () => {
+                                const ok = confirm('Are you sure you want to cancel this order?');
+                                if (!ok) return;
+                                try {
+                                  await cancelOrder(ord.id);
+                                  // Refresh orders list
+                                  const refreshed = await serviceDb.getOrders(user.uid);
+                                  const sorted = refreshed.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                                  setOrders(sorted);
+                                } catch {
+                                  triggerToast('Failed to cancel order.', 'error');
+                                }
+                              }}
+                              className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-semibold hover:bg-red-700"
+                            >
+                              Cancel Order
+                            </button>
+                          </div>
+                        )}
 
                       </div>
                     );
@@ -357,9 +548,17 @@ export default function AccountPage() {
               ---------------------------------------------------- */}
           {activeTab === 'addresses' && (
             <div className="flex flex-col gap-6">
-              <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
-                Saved Shipping Profiles
-              </h3>
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A]">
+                  Saved Shipping Profiles
+                </h3>
+                <button
+                  onClick={() => openAddressModal()}
+                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-[#2A2A2A] transition-colors"
+                >
+                  + Add Address
+                </button>
+              </div>
 
               {loadingAddr ? (
                 <div className="flex justify-center py-10">
@@ -372,39 +571,242 @@ export default function AccountPage() {
                       key={addr.id}
                       className="border border-[#EDE6DA] rounded-2xl p-5 bg-[#F8F5F0] flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative"
                     >
-                      <div className="text-xs flex flex-col gap-1 pr-8">
+                      {addr.isDefault && (
+                        <div className="absolute top-4 left-4 bg-[#D4AF37] text-white text-[8px] font-bold px-2 py-1 rounded-full">
+                          DEFAULT
+                        </div>
+                      )}
+                      
+                      <div className="text-xs flex flex-col gap-1 pr-8 mt-2">
                         <h4 className="font-bold text-[#1A1A1A] text-sm truncate flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
                           <span>{addr.fullName}</span>
                         </h4>
                         <span className="text-[10px] text-gray-400 font-bold block mt-1">Mobile: {addr.phone}</span>
-                        <p className="text-gray-600 mt-2 font-medium leading-relaxed font-body">
-                          {addr.addressLine}, <br />
-                          {addr.city}, {addr.state} - <span className="font-bold text-[#1A1A1A]">{addr.pincode}</span>
+                        <p className="text-gray-600 mt-2 font-medium leading-relaxed font-body text-xs">
+                          {addr.addressLine1}{addr.addressLine2 && <>, {addr.addressLine2}</> }<br />
+                          {addr.city}, {addr.state} - <span className="font-bold text-[#1A1A1A]">{addr.pincode}</span> <br />
+                          {addr.country || 'India'}
                         </p>
                       </div>
 
-                      {/* Delete button */}
-                      <button
-                        onClick={() => handleDeleteAddr(addr.id)}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-white border border-gray-100 text-red-500 hover:bg-red-50 transition-colors shadow-sm active:scale-95"
-                        title="Remove Saved Profile"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Edit and Delete buttons */}
+                      <div className="flex gap-2 absolute top-4 right-4">
+                        <button
+                          onClick={() => openAddressModal(addr)}
+                          className="p-2 rounded-full bg-white border border-gray-100 text-[#1A1A1A] hover:bg-[#EDE6DA] transition-colors shadow-sm active:scale-95"
+                          title="Edit Address"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAddr(addr.id)}
+                          className="p-2 rounded-full bg-white border border-gray-100 text-red-500 hover:bg-red-50 transition-colors shadow-sm active:scale-95"
+                          title="Delete Address"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-10 border border-dashed border-[#EDE6DA] rounded-xl p-4 bg-gray-50">
                   <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">
-                    No shipping addresses registered.
+                    No saved addresses yet.
                   </p>
                   <p className="text-[10px] text-gray-400 mt-1 leading-normal font-body">
-                    Addresses are automatically saved to your account book during checkout operations.
+                    Add your first address to make checkout faster.
                   </p>
+                  <button
+                    onClick={() => openAddressModal()}
+                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-[10px] font-semibold uppercase tracking-wider rounded-xl shadow-md"
+                  >
+                    Add Your First Address
+                  </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ADDRESS FORM MODAL */}
+          {showAddressModal && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full max-h-screen overflow-y-auto shadow-xl">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-serif font-semibold text-[#1A1A1A]">
+                    {editingAddressId ? 'Edit Address' : 'Add New Address'}
+                  </h3>
+                  <button onClick={closeAddressModal} className="p-1 hover:bg-gray-100 rounded-lg">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {/* Full Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => handleFormChange('fullName', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.fullName ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="Your full name"
+                    />
+                    {formErrors.fullName && <p className="text-red-600 text-xs mt-1">{formErrors.fullName}</p>}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => handleFormChange('phone', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.phone ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="10-digit mobile number"
+                    />
+                    {formErrors.phone && <p className="text-red-600 text-xs mt-1">{formErrors.phone}</p>}
+                  </div>
+
+                  {/* Address Line 1 */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Address Line 1 *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.addressLine1}
+                      onChange={(e) => handleFormChange('addressLine1', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.addressLine1 ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="Street address, building, apartment"
+                    />
+                    {formErrors.addressLine1 && <p className="text-red-600 text-xs mt-1">{formErrors.addressLine1}</p>}
+                  </div>
+
+                  {/* Address Line 2 */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Address Line 2
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.addressLine2}
+                      onChange={(e) => handleFormChange('addressLine2', e.target.value)}
+                      className="w-full px-3 py-2 border border-[#EDE6DA] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+                      placeholder="Apt, suite, etc. (optional)"
+                    />
+                  </div>
+
+                  {/* City */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => handleFormChange('city', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.city ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="City"
+                    />
+                    {formErrors.city && <p className="text-red-600 text-xs mt-1">{formErrors.city}</p>}
+                  </div>
+
+                  {/* State */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      State *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.state}
+                      onChange={(e) => handleFormChange('state', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.state ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="State/Province"
+                    />
+                    {formErrors.state && <p className="text-red-600 text-xs mt-1">{formErrors.state}</p>}
+                  </div>
+
+                  {/* Pincode */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Pincode *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.pincode}
+                      onChange={(e) => handleFormChange('pincode', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.pincode ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="6-digit postal code"
+                    />
+                    {formErrors.pincode && <p className="text-red-600 text-xs mt-1">{formErrors.pincode}</p>}
+                  </div>
+
+                  {/* Country */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                      Country *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.country}
+                      onChange={(e) => handleFormChange('country', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                        formErrors.country ? 'border-red-500' : 'border-[#EDE6DA]'
+                      }`}
+                      placeholder="Country"
+                    />
+                    {formErrors.country && <p className="text-red-600 text-xs mt-1">{formErrors.country}</p>}
+                  </div>
+
+                  {/* Default Address Checkbox */}
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="isDefault"
+                      checked={formData.isDefault}
+                      onChange={(e) => handleFormChange('isDefault', e.target.checked)}
+                      className="w-4 h-4 text-[#D4AF37] border-gray-300 rounded cursor-pointer"
+                    />
+                    <label htmlFor="isDefault" className="text-xs font-semibold text-gray-700 cursor-pointer">
+                      Set as default shipping address
+                    </label>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button
+                      onClick={closeAddressModal}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold uppercase rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveAddress}
+                      className="flex-1 px-4 py-2 bg-[#1A1A1A] text-white text-xs font-semibold uppercase rounded-lg hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      {editingAddressId ? 'Update Address' : 'Add Address'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

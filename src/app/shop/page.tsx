@@ -14,7 +14,7 @@ function ShopContent() {
   // Search and suggestions state
   const queryParam = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || 'all';
-  const wearTypeParam = searchParams.get('wearType') || 'all';
+  const wearTypeParam = searchParams.get('wearType') || '';
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,9 @@ function ShopContent() {
 
   // Filter States
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
-  const [selectedWearType, setSelectedWearType] = useState(wearTypeParam);
+  const [selectedWearStyles, setSelectedWearStyles] = useState<string[]>(
+    wearTypeParam ? wearTypeParam.split(',') : []
+  );
   const [maxPrice, setMaxPrice] = useState(3000);
   const [sortBy, setSortBy] = useState<'featured' | 'priceLow' | 'priceHigh' | 'rating' | 'newest'>('featured');
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
@@ -33,7 +35,7 @@ function ShopContent() {
   useEffect(() => {
     setSearchVal(queryParam);
     setSelectedCategory(categoryParam);
-    setSelectedWearType(wearTypeParam);
+    setSelectedWearStyles(wearTypeParam ? wearTypeParam.split(',') : []);
   }, [queryParam, categoryParam, wearTypeParam]);
 
   // Load products
@@ -89,7 +91,7 @@ function ShopContent() {
   const clearAllFilters = () => {
     setSearchVal('');
     setSelectedCategory('all');
-    setSelectedWearType('all');
+    setSelectedWearStyles([]);
     setMaxPrice(3000);
     setSortBy('featured');
     router.push('/shop');
@@ -101,7 +103,11 @@ function ShopContent() {
       // Category Match
       if (selectedCategory !== 'all' && prod.category !== selectedCategory) return false;
       // Wear Type Match
-      if (selectedWearType !== 'all' && prod.wearType !== selectedWearType) return false;
+      if (selectedWearStyles.length > 0) {
+        const productStyles = prod.wearStyles || [];
+        const hasMatch = selectedWearStyles.some(style => productStyles.includes(style));
+        if (!hasMatch) return false;
+      }
       // Price range match
       if (prod.discountPrice > maxPrice) return false;
       // Search matching name / description
@@ -246,20 +252,26 @@ function ShopContent() {
           <div className="flex flex-col gap-2">
             <h4 className="text-xs uppercase tracking-wider font-bold text-[#4B352A]">Wear Style</h4>
             <div className="flex flex-col gap-1.5 mt-1">
-              {['all', 'daily', 'casual', 'party', 'traditional', 'festive'].map((style) => (
+              {['Daily Wear', 'Casual Wear', 'Party Wear', 'Traditional Wear', 'Festive Wear'].map((style) => (
                 <button
                   key={style}
                   onClick={() => {
-                    setSelectedWearType(style);
-                    updateParams({ wearType: style });
+                    let newStyles = [...selectedWearStyles];
+                    if (newStyles.includes(style)) {
+                      newStyles = newStyles.filter(s => s !== style);
+                    } else {
+                      newStyles.push(style);
+                    }
+                    setSelectedWearStyles(newStyles);
+                    updateParams({ wearType: newStyles.length > 0 ? newStyles.join(',') : null });
                   }}
                   className={`text-xs text-left py-1.5 px-2.5 rounded-lg capitalize font-medium transition-colors ${
-                    selectedWearType === style
+                    selectedWearStyles.includes(style)
                       ? 'bg-[#1A1A1A] text-[#EDE6DA]'
                       : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-gray-200'
                   }`}
                 >
-                  {style} Wear
+                  {style}
                 </button>
               ))}
             </div>
@@ -419,20 +431,26 @@ function ShopContent() {
                 <div className="flex flex-col gap-2">
                   <h4 className="text-xs uppercase tracking-wider font-bold text-[#4B352A]">Wear Style</h4>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {['all', 'daily', 'casual', 'party', 'traditional', 'festive'].map((style) => (
+                    {['Daily Wear', 'Casual Wear', 'Party Wear', 'Traditional Wear', 'Festive Wear'].map((style) => (
                       <button
                         key={style}
                         onClick={() => {
-                          setSelectedWearType(style);
-                          updateParams({ wearType: style });
+                          let newStyles = [...selectedWearStyles];
+                          if (newStyles.includes(style)) {
+                            newStyles = newStyles.filter(s => s !== style);
+                          } else {
+                            newStyles.push(style);
+                          }
+                          setSelectedWearStyles(newStyles);
+                          updateParams({ wearType: newStyles.length > 0 ? newStyles.join(',') : null });
                         }}
                         className={`text-xs py-1.5 px-3 rounded-lg capitalize font-medium transition-colors border ${
-                          selectedWearType === style
+                          selectedWearStyles.includes(style)
                             ? 'bg-[#1A1A1A] border-[#1A1A1A] text-[#EDE6DA]'
                             : 'bg-white border-[#EDE6DA] text-gray-600'
                         }`}
                       >
-                        {style} Wear
+                        {style}
                       </button>
                     ))}
                   </div>

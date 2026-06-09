@@ -6,70 +6,158 @@ import Image from 'next/image';
 import { serviceDb, Product } from '../lib/firebase';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
-import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, Instagram, Facebook, MessageSquare, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle, ChevronLeft, ChevronRight, Instagram, Facebook, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { normalizeSlug } from '../lib/slugUtils';
 
 export default function HomePage() {
   const { triggerToast } = useApp();
-  const [bestSellers, setBestSellers] = useState<Product[]>([]);
-  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+// Removed static bestSellers and newArrivals state; using derived arrays from allProducts
   const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
 
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [heroBanner, setHeroBanner] = useState<any>(null);
+
+  const heroImageUrl = '/images/hero banner.png';
+  const heroImageAlt = heroBanner?.title || 'KAELORA Jewellery hero image';
+
   useEffect(() => {
-    serviceDb.getProducts().then((products) => {
-      setBestSellers(products.filter((item) => item.bestSeller).slice(0, 4));
-      setNewArrivals(
-        [...products]
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 4)
-      );
+    const loadHeroBanner = async () => {
+      try {
+        const banner = await serviceDb.getHeroBanner();
+        setHeroBanner(banner);
+      } catch (error) {
+        console.error('[HomePage] Failed to load hero banner:', error);
+      }
+    };
+    loadHeroBanner();
+    const unsub = (serviceDb as any).onHeroBannerChanged((banner: any) => {
+      setHeroBanner(banner);
     });
+    return () => {
+      try {
+        if (typeof unsub === 'function') unsub();
+      } catch {}
+    };
   }, []);
 
-  const categories = [
+  useEffect(() => {
+    const unsub = (serviceDb as any).onProductsChanged((products: Product[]) => {
+      setAllProducts(products);
+    });
+    return () => {
+      try { if (typeof unsub === 'function') unsub(); } catch {}
+    };
+  }, []);
+
+  // Helper: pick latest product image for a category. Prefer New Arrivals, then latest product. Exclude logo/static placeholders.
+  const getCategoryImage = (categoryKey: 'earrings' | 'chains' | 'bangles') => {
+    const logoMarker = 'logo-burgundy';
+    // Prefer products explicitly marked to show in Shop by Category
+    const byShopFlag = allProducts
+      .filter(p => p.category === categoryKey && p.showInShopByCategory === true && Array.isArray(p.images) && p.images.length > 0)
+      .sort((a, b) => (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+
+    const byNewArrival = allProducts
+      .filter(p => p.category === categoryKey && p.showInNewArrivals && Array.isArray(p.images) && p.images.length > 0)
+      .sort((a, b) => (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+
+    let pick = byShopFlag[0] || byNewArrival[0];
+    if (!pick) {
+      const byLatest = allProducts
+        .filter(p => p.category === categoryKey && Array.isArray(p.images) && p.images.length > 0)
+        .sort((a, b) => (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      pick = byLatest[0];
+    }
+
+    if (!pick) return undefined;
+    const img = Array.isArray(pick.images) && pick.images.length > 0 ? pick.images[0] : undefined;
+    const url = typeof img === 'string' ? img : img?.url;
+    if (!url) return undefined;
+    if (String(url).includes(logoMarker)) return undefined;
+    return url;
+  };
+
+  const getProductImageUrl = (p: Product) => {
+    if (!p || !Array.isArray(p.images) || p.images.length === 0) return undefined;
+    const firstImage = p.images[0];
+    if (typeof firstImage === 'string') return firstImage;
+    if (firstImage && typeof firstImage.url === 'string') return firstImage.url;
+    return undefined;
+  };
+
+  const hasValidImage = (p: Product) => {
+    const logoMarker = 'logo-burgundy';
+    const url = getProductImageUrl(p);
+    if (!url) return false;
+    const raw = url.trim();
+    if (!raw) return false;
+    if (raw.startsWith('data:')) return false;
+    if (raw.includes(logoMarker)) return false;
+    return true;
+  };
+
+  const categoriesData = [
     {
       name: 'Earrings',
       tagline: 'Delicate sparkles for your ears.',
       href: '/shop?category=earrings',
-      image: '/images/logo-burgundy.jpg',
-      count: '7 Models',
+      image: getCategoryImage('earrings'),
+      count: (allProducts.filter(p => p.category === 'earrings' && p.showInShopByCategory === true).length) || allProducts.filter(p => p.category === 'earrings').length,
     },
     {
       name: 'Chains',
       tagline: 'Lustrous necklaces cast in gold.',
       href: '/shop?category=chains',
-      image: '/images/logo-burgundy.jpg',
-      count: '7 Models',
+      image: getCategoryImage('chains'),
+      count: (allProducts.filter(p => p.category === 'chains' && p.showInShopByCategory === true).length) || allProducts.filter(p => p.category === 'chains').length,
     },
     {
       name: 'Bangles',
       tagline: 'Feminine wrist cuffs with filigree.',
       href: '/shop?category=bangles',
-      image: '/images/logo-burgundy.jpg',
-      count: '7 Models',
+      image: getCategoryImage('bangles'),
+      count: (allProducts.filter(p => p.category === 'bangles' && p.showInShopByCategory === true).length) || allProducts.filter(p => p.category === 'bangles').length,
     },
   ];
 
-  const collections = [
-    {
-      title: 'Daily Wear Collection',
-      description: 'Elegant, lightweight tarnish-free articles optimized for active daily lives.',
-      href: '/shop?wearType=daily',
-      image: '/images/logo-burgundy.jpg',
-    },
-    {
-      title: 'Party Wear Collection',
-      description: 'Stunning AAA pave drops and statement wrist cuffs designed to wow crowds.',
-      href: '/shop?wearType=party',
-      image: '/images/logo-burgundy.jpg',
-    },
-    {
-      title: 'Trending Collection',
-      description: 'Modern filigree work, butterfly charms, and shell pearls picked by top editors.',
-      href: '/shop?featured=true',
-      image: '/images/logo-burgundy.jpg',
-    },
-  ];
+  // New Arrivals: prefer products flagged showInNewArrivals and with valid images; if none, fallback to latest products with valid images
+  const validNewArrivals = allProducts.filter(
+    p => p.showInNewArrivals === true && hasValidImage(p)
+  );
+
+  const newArrivalProducts = validNewArrivals.length > 0
+    ? [...validNewArrivals].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : [...allProducts]
+        .filter(p => hasValidImage(p))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 8);
+
+  // Featured Collections: products flagged by exact Firestore field
+  const rawFeatured = allProducts.filter(
+    p => p.showInFeaturedCollections === true && hasValidImage(p)
+  );
+  const featuredProducts = rawFeatured.length > 0
+    ? rawFeatured.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    : allProducts.filter(p => hasValidImage(p)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
+
+  // Trending collections driven by Firestore fields
+  const trendingProducts = allProducts
+    .filter(p => p.showInTrending === true && hasValidImage(p))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 8);
+
+  const products = allProducts;
+  console.log(products);
+  console.log(products.filter(p => p.showInFeaturedCollections === true));
+  console.log(products.filter(p => p.showInNewArrivals === true));
+  console.log(products.filter(p => p.showInTrending === true));
+  console.log('featuredProducts', featuredProducts);
+  console.log('newArrivalProducts', newArrivalProducts);
+  console.log('trendingProducts', trendingProducts);
+
+
+// collections removed; sections will be rendered dynamically based on product flags
 
   const clientReviews = [
     {
@@ -108,87 +196,69 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
-      <section className="relative h-[90vh] sm:h-screen w-full flex items-center justify-center bg-[#F8F5F0] overflow-hidden -mt-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#EDE6DA]/20 to-[#F8F5F0] z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.08)_0%,transparent_60%)] z-10" />
-        <motion.div
-          initial={{ opacity: 0.08, scale: 1.0 }}
-          animate={{ opacity: 0.10, scale: 1 }}
-          transition={{ duration: 2.4 }}
-          className="absolute inset-0 z-0 bg-center bg-no-repeat filter blur-[1px] bg-[length:72%_auto] sm:bg-[length:84%_auto] md:bg-[length:96%_auto] lg:bg-[length:108%_auto]"
-          style={{
-            backgroundImage: `url('/images/logo-burgundy.jpg')`,
-            backgroundPosition: 'center center',
-            backgroundRepeat: 'no-repeat',
-          }}
-        />
-
-        <div className="absolute inset-0 opacity-40 z-10 pointer-events-none">
-          <div className="absolute top-1/4 left-10 w-2 h-2 bg-[#D4AF37]/40 rounded-full blur-lg" style={{ animationDuration: '7s' }} />
-          <div className="absolute bottom-2/5 right-14 w-3 h-3 bg-[#D4AF37]/30 rounded-full blur-xl" style={{ animationDuration: '8.5s' }} />
-          <div className="absolute top-1/2 right-24 w-1.5 h-1.5 bg-[#D4AF37]/50 rounded-full blur-sm" style={{ animationDuration: '5.4s' }} />
+      <section className="relative h-[90vh] sm:h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Hero Image Background */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={heroBanner?.imageUrl || heroImageUrl}
+            alt={heroBanner?.imageUrl ? 'Hero Banner' : heroImageAlt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center w-full h-full"
+          />
         </div>
 
+        {/* Dark Overlay for Text Readability */}
+        <div className="absolute inset-0 bg-black/30 z-5" />
+
+        {/* Hero Content */}
         <div className="relative max-w-5xl mx-auto px-6 text-center flex flex-col items-center justify-center z-20 h-full">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: 'easeOut' }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-[#D4AF37]/30 bg-white/80 backdrop-blur-sm shadow-xl mb-6"
-          >
-            <Sparkles className="w-4 h-4 text-[#D4AF37] animate-pulse" />
-            <span className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#4B352A] font-bold font-serif">
-              Elegant • Affordable • Beautiful
-            </span>
-          </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="text-4xl sm:text-6xl lg:text-7xl font-serif font-semibold text-[#1A1A1A] tracking-wide leading-tight uppercase max-w-4xl"
-          >
-            Every Piece <br className="sm:hidden" />
-            <span className="italic text-[#4B352A] font-light bg-gradient-to-r from-[#4B352A] via-[#D4AF37] to-[#4B352A] bg-clip-text text-transparent">
-              Completes
-            </span>{' '}
-            Your Style
-          </motion.h1>
 
+          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 0.9, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.6 }}
-            className="text-xs sm:text-base text-[#4B352A] max-w-2xl mt-5 font-body leading-relaxed uppercase tracking-widest font-medium"
+            className="text-lg sm:text-2xl font-serif font-semibold text-[#EDE6DA] uppercase tracking-wider mb-4"
           >
-            Discover beautiful earrings, chains and bangles designed to make every moment special.
+            Affordable • Elegant • Beautiful
           </motion.p>
-
+          
+          {/* Buttons container */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2, delay: 0.9 }}
             className="flex flex-col sm:flex-row items-center gap-4 mt-10 w-full sm:w-auto"
           >
-            <Link
-              href="/shop"
-              className="w-full sm:w-56 py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-xl shadow-gray-400/20 active:scale-95 flex items-center justify-center gap-1.5 group border border-gray-800"
-            >
-              <span>Shop Collection</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/shop?featured=true"
-              className="w-full sm:w-56 py-4 bg-white/85 hover:bg-white text-[#1A1A1A] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-md active:scale-95 border border-[#EDE6DA] flex items-center justify-center hover:border-[#D4AF37]"
-            >
-              <span>New Arrivals</span>
-            </Link>
-          </motion.div>
-
+            {heroBanner?.imageUrl && heroBanner?.buttonText && (
+              <Link
+                href={heroBanner?.buttonLink?.trim() ? heroBanner.buttonLink : '/shop'}
+                className="w-full sm:w-56 py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-xl shadow-gray-400/20 active:scale-95 flex items-center justify-center gap-1.5 group border border-gray-800"
+              >
+                <span>{heroBanner.buttonText}</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
+            <motion.div
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  className="w-full sm:w-56"
+>
+  <Link
+    href="/shop"
+    className="w-full h-full flex items-center justify-center py-4 bg-white/85 hover:bg-white text-[#1A1A1A] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-md active:scale-95 border border-[#EDE6DA] hover:border-[#D4AF37]"
+  >
+    <span>Shop Now</span>
+  </Link>
+</motion.div>
+</motion.div>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="absolute bottom-8 flex flex-col items-center gap-1.5 opacity-60 text-xs text-[#4B352A] font-body font-semibold uppercase tracking-widest cursor-pointer"
+            className="absolute bottom-8 flex flex-col items-center gap-1.5 opacity-60 text-xs text-white font-body font-semibold uppercase tracking-widest cursor-pointer"
             onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
           >
             <span>Scroll Down</span>
@@ -208,7 +278,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {categories.map((cat, idx) => (
+            {categoriesData.map((cat, idx) => (
               <motion.div
                 key={cat.name}
                 initial={{ opacity: 0, y: 30 }}
@@ -218,14 +288,14 @@ export default function HomePage() {
                 className="group relative h-96 rounded-[2rem] overflow-hidden border border-[#EDE6DA] shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
               >
                 <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                  style={{ backgroundImage: `url('${cat.image}')` }}
+                  className={`absolute inset-0 transition-transform duration-700 group-hover:scale-105 ${!cat.image ? 'bg-gradient-to-br from-[#F8F5F0] to-[#EFE9E2]' : 'bg-cover bg-center'}`}
+                  style={cat.image ? { backgroundImage: `url('${cat.image}')` } : undefined}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/85 via-transparent to-transparent z-10" />
 
                 <div className="absolute bottom-8 left-8 right-8 z-20 flex flex-col justify-end gap-2 text-white">
                   <span className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-semibold font-body">
-                    {cat.count}
+                    {cat.count} {cat.count === 1 ? 'Model' : 'Models'}
                   </span>
                   <h3 className="text-3xl font-serif font-semibold uppercase tracking-wider">
                     {cat.name}
@@ -258,9 +328,9 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {collections.map((coll, idx) => (
+            {featuredProducts.slice(0, 3).map((coll, idx) => (
               <motion.div
-                key={coll.title}
+                key={coll.id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -268,63 +338,38 @@ export default function HomePage() {
                 className="flex flex-col rounded-[2rem] border border-[#EDE6DA] overflow-hidden bg-[#F8F5F0] hover:shadow-xl transition-all duration-300"
               >
                 <div className="h-72 overflow-hidden relative group">
-                  <Image
-                    src={coll.image}
-                    alt={coll.title}
-                    fill
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {(() => {
+                    const imgRaw = coll.images && coll.images[0] ? (typeof coll.images[0] === 'string' ? coll.images[0] : coll.images[0]?.url) : undefined;
+                    if (imgRaw && !String(imgRaw).includes('logo-burgundy')) {
+                      return (
+                        <Image
+                          src={imgRaw}
+                          alt={coll.name}
+                          fill
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      );
+                    }
+                    return <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">No image available</div>;
+                  })()}
                   <div className="absolute inset-0 bg-[#1A1A1A]/10" />
                 </div>
                 <div className="p-6 flex flex-col justify-between flex-grow gap-4">
                   <div>
                     <h3 className="text-xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wide">
-                      {coll.title}
+                      {coll.name}
                     </h3>
-                    <p className="text-sm text-gray-500 leading-relaxed font-body mt-3">
-                      {coll.description}
-                    </p>
                   </div>
                   <Link
-                    href={coll.href}
+                    href={`/product/${normalizeSlug(coll.slug)}`}
                     className="inline-flex items-center gap-1 px-5 py-3 bg-white border border-[#EDE6DA] hover:border-[#D4AF37] text-xs font-semibold uppercase tracking-wider text-[#1A1A1A] rounded-2xl transition-all font-body"
                   >
-                    <span>Explore Lookbook</span>
+                    <span>Explore Product</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </motion.div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-4">
-            <div>
-              <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Customer Favorites</span>
-              <h2 className="text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
-                Best Sellers
-              </h2>
-            </div>
-            <Link
-              href="/shop?featured=true"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-[#1A1A1A] hover:text-[#D4AF37] transition-colors border-b border-[#1A1A1A] hover:border-[#D4AF37] pb-1 font-body"
-            >
-              <span>View All Best Sellers</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {bestSellers.length > 0 ? (
-              bestSellers.map((prod) => <ProductCard key={prod.id} product={prod} />)
-            ) : (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-96 rounded-2xl bg-white border border-[#EDE6DA] animate-pulse" />
-              ))
-            )}
           </div>
         </div>
       </section>
@@ -347,9 +392,77 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {newArrivals.length > 0 ? (
-              newArrivals.map((prod) => <ProductCard key={prod.id} product={prod} />)
+          <div
+            className="grid gap-6 justify-center"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 320px))' }}
+          >
+            {newArrivalProducts.map((prod) => (
+              <div
+                key={prod.id}
+                className="w-[320px] min-w-[320px] max-w-[320px] rounded-[2rem] border border-[#EDE6DA] bg-white overflow-hidden shadow-sm"
+              >
+                <Link href={`/product/${normalizeSlug(prod.slug)}`} className="block w-full">
+                  <div className="w-full">
+                    {(() => {
+                      const imgRaw = prod.images && prod.images[0]
+                        ? (typeof prod.images[0] === 'string' ? prod.images[0] : prod.images[0]?.url)
+                        : undefined;
+                      return imgRaw ? (
+                        <Image
+                          src={imgRaw}
+                          width={320}
+                          height={380}
+                          alt={prod.name}
+                          className="w-full h-[380px] object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-[380px] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">
+                          No image available
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </Link>
+                <div className="p-5 flex flex-col gap-3">
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-[#4B352A] font-semibold">
+                    {prod.category}
+                  </span>
+                  <Link href={`/product/${normalizeSlug(prod.slug)}`} className="text-lg font-serif font-semibold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors">
+                    {prod.name}
+                  </Link>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-[#1A1A1A] font-bold">₹{prod.discountPrice.toLocaleString('en-IN')}</span>
+                    {prod.price > prod.discountPrice && (
+                      <span className="text-xs text-gray-400 line-through">₹{prod.price.toLocaleString('en-IN')}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Trending</span>
+            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+              Trending Products
+            </h2>
+            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+          </div>
+
+          <div
+            className="grid gap-6 justify-center"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 320px))' }}
+          >
+            {trendingProducts.length > 0 ? (
+              trendingProducts.map((prod) => (
+                <div key={prod.id} className="w-[320px] min-w-[320px] max-w-[320px]">
+                  <ProductCard product={prod} />
+                </div>
+              ))
             ) : (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-96 rounded-2xl bg-white border border-[#EDE6DA] animate-pulse" />
@@ -468,32 +581,6 @@ export default function HomePage() {
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Most Loved</span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
-              Customer Favorites
-            </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestSellers.map((product) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <ProductCard product={product} />
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>

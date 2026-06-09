@@ -32,7 +32,7 @@ export default function AboutPage() {
             Founded with the singular objective of delivering premium fashion jewellery without the customary designer markups, KAELORA bridges high-end editorial aesthetics and everyday tarnish-free durability. 
           </p>
           <p className="text-xs sm:text-sm text-gray-500 leading-relaxed font-body">
-            Each collection is thoughtfully designed utilizing pure hypoallergenic surgical steel cores double-plated in tarnish-free 18k gold alloy, resulting in brilliant shines that remain secure for sensitive skin types. From pave butterfly drops to heavy wrist bangles, every article is chosen to complement your personal elegance.
+            Each collection is thoughtfully crafted using high-quality fashion jewellery materials designed for lasting shine, resulting in brilliant finishes that remain secure for sensitive skin types. From pave butterfly drops to heavy wrist bangles, every article is chosen to complement your personal elegance.
           </p>
           <div className="w-16 h-[1.5px] bg-[#D4AF37] my-2" />
           <p className="text-xs italic tracking-wide text-gray-400 font-body">
@@ -77,7 +77,7 @@ export default function AboutPage() {
         {[
           {
             title: 'Tarnish Resistant',
-            desc: 'Double-plated structures specifically engineered to remain waterproof and tarnish-free through showers and active daily lives.',
+            desc: 'Premium crafted structures specifically engineered to remain waterproof and tarnish-free through showers and active daily lives.',
             icon: Sparkles
           },
           {

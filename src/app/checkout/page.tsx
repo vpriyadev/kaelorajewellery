@@ -9,7 +9,7 @@ import { MapPin, ShieldCheck, CreditCard, ChevronRight, Loader2, Gift, Calendar,
 import Link from 'next/link';
 
 export default function CheckoutPage() {
-  const { cart, user, settings, setAuthModalOpen, checkoutCart, addAddress, triggerToast } = useApp();
+  const { cart, user, settings, setAuthModalOpen, checkoutCart, addAddress, triggerToast, sanitizeError } = useApp();
   const router = useRouter();
 
   // Success States
@@ -27,9 +27,6 @@ export default function CheckoutPage() {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [saveToBook, setSaveToBook] = useState(true);
-
-  // Payment Options
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'online'>('online');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if cart is empty
@@ -41,7 +38,7 @@ export default function CheckoutPage() {
 
   // Load user saved addresses
   useEffect(() => {
-    if (user) {
+    if (user?.uid) {
       serviceDb.getAddresses(user.uid).then((addr) => {
         setSavedAddresses(addr);
         if (addr.length > 0) {
@@ -60,7 +57,7 @@ export default function CheckoutPage() {
   const applySavedAddress = (addr: Address) => {
     setFullName(addr.fullName);
     setPhone(addr.phone);
-    setAddressLine(addr.addressLine);
+    setAddressLine(addr.addressLine1 || '');
     setCity(addr.city);
     setState(addr.state);
     setPincode(addr.pincode);
@@ -86,9 +83,17 @@ export default function CheckoutPage() {
 
   // Pricing math
   const subtotal = cart.reduce((acc, item) => acc + (item.product.discountPrice * item.quantity), 0);
+  const productDeliveryFee = cart.reduce((acc, item) => {
+    return item.product.freeDelivery ? acc : acc + ((item.product.deliveryFee || 0) * item.quantity);
+  }, 0);
   const shippingCharge = subtotal >= settings.freeShippingLimit || !settings.enableFreeShipping ? 0 : settings.standardShippingCharge;
-  const codHandlingFee = paymentMethod === 'cod' ? settings.codFee : 0;
-  const totalAmount = subtotal + shippingCharge + codHandlingFee;
+  const shippingAndDelivery = shippingCharge + productDeliveryFee;
+  const totalAmount = subtotal + shippingAndDelivery;
+
+  console.log("Cart Items:", cart);
+  console.log("Product Delivery Fee:", productDeliveryFee);
+  console.log("Shipping Fee:", shippingCharge);
+  console.log("Shipping & Delivery:", shippingAndDelivery);
 
   // Reward Progress calculations
   const cartItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -106,6 +111,22 @@ export default function CheckoutPage() {
     est.setDate(est.getDate() + days);
     return est.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
+
+
+const loadRazorpay = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+
+    script.onload = () => resolve(true);
+
+    script.onerror = () => resolve(false);
+
+    document.body.appendChild(script);
+  });
+};
+
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,10 +159,15 @@ export default function CheckoutPage() {
         userId: user.uid,
         fullName,
         phone,
-        addressLine,
+        addressLine1: addressLine,
+        addressLine2: '',
         city,
         state,
-        pincode
+        pincode,
+        country: 'India',
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
       if (saveToBook && selectedAddressId === 'new') {
@@ -149,25 +175,159 @@ export default function CheckoutPage() {
       }
 
       // 2. Process Checkout
-      const order = await checkoutCart(shippingAddress, paymentMethod);
-      setCompletedOrder(order);
-
-      // Trigger standard confetti dynamically
-      try {
-        const confetti = (await import('canvas-confetti')).default;
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#D4AF37', '#EDE6DA', '#1A1A1A']
-        });
-      } catch {
-        // dynamic import failed, fallback gracefully
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        triggerToast("Failed to load Razorpay SDK", "error");
+        setIsSubmitting(false);
+        return;
       }
 
-      triggerToast("✨ Order successfully placed! Enjoy your KAELORA jewellery.", "success");
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: totalAmount,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("API Error:", text);
+        throw new Error("Failed to create Razorpay order");
+      }
+
+      const razorpayOrder = await res.json();
+      console.log("Razorpay Order:", razorpayOrder);
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "",
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "KAELORA",
+        description: "Jewellery Purchase",
+        order_id: razorpayOrder.id,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              console.log("LIVE PAYMENT SUCCESS");
+              console.log("PAYMENT VERIFIED");
+              const order = await checkoutCart(shippingAddress);
+              console.log("ORDER CREATED");
+              setCompletedOrder(order);
+
+              // Trigger success email
+              fetch("/api/send-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  type: "success",
+                  customerName: fullName,
+                  customerEmail: user.email,
+                  orderId: order.id,
+                  amountPaid: totalAmount,
+                  products: cart.map(item => ({ productName: item.product.name, quantity: item.quantity })),
+                  shippingAddress,
+                  estimatedDeliveryDate: getDeliveryEstimateDate()
+                })
+              });
+
+              try {
+                const confetti = (await import('canvas-confetti')).default;
+                confetti({
+                  particleCount: 150,
+                  spread: 80,
+                  origin: { y: 0.6 },
+                  colors: ['#D4AF37', '#EDE6DA', '#1A1A1A']
+                });
+              } catch {
+                // dynamic import failed, fallback gracefully
+              }
+
+              triggerToast("✨ Order successfully placed! Enjoy your KAELORA jewellery.", "success");
+            } else {
+              triggerToast("Payment verification failed", "error");
+            }
+          } catch (err) {
+            triggerToast("Payment verification failed", "error");
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            // Log cancellation
+            console.log('=== PAYMENT CANCELLED ===');
+            console.log('User cancelled the payment popup.');
+            // Send cancellation email
+            try {
+              fetch('/api/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'cancelled',
+                  customerName: fullName,
+                  customerEmail: user.email,
+                }),
+              }).then(() => console.log('Cancellation email request sent'))
+                .catch(err => console.error('Cancellation email request error:', err));
+            } catch (e) {
+              console.error('Error sending cancellation email:', e);
+            }
+            triggerToast("Payment cancelled. No order has been created.", "info");
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          name: fullName,
+          email: user.email || "",
+          contact: phone,
+        },
+        theme: {
+          color: "#D4AF37",
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+
+      paymentObject.on('payment.failed', function (response: any) {
+        // Log failure details
+        console.log('=== PAYMENT FAILED ===');
+        console.log('Customer email:', user.email);
+        console.log('Payment response:', response);
+
+        // Trigger failure email with detailed logs
+        try {
+          fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'failed',
+              customerName: fullName,
+              customerEmail: user.email,
+              orderId: razorpayOrder.id,
+              amountPaid: totalAmount,
+            }),
+          }).then(() => console.log('Failure email request sent'))
+            .catch(err => console.error('Failure email request error:', err));
+        } catch (e) {
+          console.error('Error sending failure email:', e);
+        }
+
+        triggerToast('Payment failed. Please try again.', 'error');
+        setIsSubmitting(false);
+      });
+
+      paymentObject.open();
     } catch (err: any) {
-      triggerToast(err.message || "Failed to place order.", "error");
+      const safe = sanitizeError ? sanitizeError(err) : (err?.message || 'Failed to place order.');
+      triggerToast(safe, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,11 +368,17 @@ export default function CheckoutPage() {
           {/* Order particulars grid summary */}
           <div className="w-full border-t border-b border-[#EDE6DA] py-6 flex flex-col gap-3 text-xs text-gray-500 text-left">
             <h3 className="font-bold text-[#1A1A1A] uppercase tracking-wider text-[11px] mb-1">Shipping Particulars:</h3>
-            <p><span className="font-semibold text-gray-700">Recipient Name:</span> {completedOrder.shippingAddress.fullName}</p>
-            <p><span className="font-semibold text-gray-700">Contact Mobile:</span> {completedOrder.shippingAddress.phone}</p>
-            <p><span className="font-semibold text-gray-700">Shipping Address:</span> {completedOrder.shippingAddress.addressLine}, {completedOrder.shippingAddress.city}, {completedOrder.shippingAddress.state} - {completedOrder.shippingAddress.pincode}</p>
-            <p><span className="font-semibold text-gray-700">Payment Status:</span> <span className="uppercase font-bold text-[#D4AF37]">{completedOrder.paymentMethod}</span> ({completedOrder.paymentStatus})</p>
-            <p><span className="font-semibold text-gray-700">Total Sum Paid:</span> <span className="font-bold text-[#1A1A1A] font-serif text-sm">₹{completedOrder.totalAmount.toLocaleString('en-IN')}</span></p>
+            {completedOrder?.shippingAddress ? (
+              <>
+                <p><span className="font-semibold text-gray-700">Recipient Name:</span> {completedOrder.shippingAddress.fullName ?? 'N/A'}</p>
+                <p><span className="font-semibold text-gray-700">Contact Mobile:</span> {completedOrder.shippingAddress.phone ?? 'N/A'}</p>
+                <p><span className="font-semibold text-gray-700">Shipping Address:</span> {`${(completedOrder.shippingAddress as any).addressLine || completedOrder.shippingAddress.addressLine1 || 'N/A'}, ${completedOrder.shippingAddress.city ?? 'N/A'}, ${completedOrder.shippingAddress.state ?? 'N/A'} - ${completedOrder.shippingAddress.pincode ?? 'N/A'}`}</p>
+              </>
+            ) : (
+              <p className="font-semibold text-gray-700">Shipping details unavailable</p>
+            )}
+            <p><span className="font-semibold text-gray-700">Payment Status:</span> <span className="uppercase font-bold text-[#D4AF37]">{completedOrder.paymentMethod ?? 'online'}</span> ({completedOrder.paymentStatus ?? 'Paid'})</p>
+            <p><span className="font-semibold text-gray-700">Total Sum Paid:</span> <span className="font-bold text-[#1A1A1A] font-serif text-sm">₹{(completedOrder.totalAmount ?? 0).toLocaleString('en-IN')}</span></p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center mt-2">
@@ -301,7 +467,7 @@ export default function CheckoutPage() {
                   <option value="new">-- Ship to a New Address --</option>
                   {savedAddresses.map((addr) => (
                     <option key={addr.id} value={addr.id}>
-                      {addr.fullName} - {addr.addressLine.slice(0, 20)}..., {addr.city}
+                      {addr.fullName} - {(addr.addressLine1 || '').slice(0, 20)}..., {addr.city}
                     </option>
                   ))}
                 </select>
@@ -410,50 +576,20 @@ export default function CheckoutPage() {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {/* Online Payment option */}
               <button
                 type="button"
-                onClick={() => setPaymentMethod('online')}
-                className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 transition-all shadow-sm ${
-                  paymentMethod === 'online'
-                    ? 'border-[#D4AF37] bg-[#F8F5F0]'
-                    : 'border-[#EDE6DA] bg-white hover:border-gray-300'
-                }`}
+                className="p-4 rounded-2xl border text-left flex flex-col gap-1.5 transition-all shadow-sm border-[#D4AF37] bg-[#F8F5F0]"
               >
                 <div className="flex justify-between items-center w-full">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">Online Payment</span>
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    paymentMethod === 'online' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-300'
-                  }`}>
-                    {paymentMethod === 'online' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                  <div className="w-4 h-4 rounded-full border border-[#D4AF37] bg-[#D4AF37] flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full" />
                   </div>
                 </div>
                 <p className="text-[10px] text-gray-500 leading-normal">
                   Pay securely using Credit Cards, Debit Cards, Netbanking, Google Pay or PhonePe. (Simulated Gateway).
-                </p>
-              </button>
-
-              {/* COD option */}
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('cod')}
-                className={`p-4 rounded-2xl border text-left flex flex-col gap-1.5 transition-all shadow-sm ${
-                  paymentMethod === 'cod'
-                    ? 'border-[#D4AF37] bg-[#F8F5F0]'
-                    : 'border-[#EDE6DA] bg-white hover:border-gray-300'
-                }`}
-              >
-                <div className="flex justify-between items-center w-full">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">Cash On Delivery</span>
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    paymentMethod === 'cod' ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-300'
-                  }`}>
-                    {paymentMethod === 'cod' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                  </div>
-                </div>
-                <p className="text-[10px] text-gray-500 leading-normal">
-                  Pay cash upon package arrival at your door. (Includes **₹{settings.codFee}** handling charges).
                 </p>
               </button>
             </div>
@@ -488,7 +624,7 @@ export default function CheckoutPage() {
               {cart.map((item) => (
                 <div key={item.product.id} className="flex items-center gap-3 text-xs">
                   <Image 
-                    src={item.product.images[0]} 
+                    src={typeof item.product.images[0] === 'string' ? item.product.images[0] : item.product.images[0]?.url} 
                     alt={item.product.name} 
                     width={40} 
                     height={40} 
@@ -506,21 +642,27 @@ export default function CheckoutPage() {
             {/* Pricing break downs */}
             <div className="flex flex-col gap-3 text-xs text-gray-500 border-t border-[#EDE6DA]/40 pt-4">
               <div className="flex justify-between items-center">
-                <span>Subtotal Sum</span>
+                <span>Subtotal</span>
                 <span className="font-semibold text-[#1A1A1A]">₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
+              {productDeliveryFee > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>Product Delivery Fee</span>
+                  <span className="font-semibold text-[#1A1A1A]">₹{productDeliveryFee.toLocaleString('en-IN')}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span>Shipping Fee</span>
                 <span className={`font-semibold ${shippingCharge === 0 ? 'text-emerald-700 font-bold' : 'text-[#1A1A1A]'}`}>
-                  {shippingCharge === 0 ? 'FREE' : `₹${shippingCharge}`}
+                  {shippingCharge === 0 ? 'Free' : `₹${shippingCharge}`}
                 </span>
               </div>
-              {paymentMethod === 'cod' && (
-                <div className="flex justify-between items-center">
-                  <span>COD Handling Fee</span>
-                  <span className="font-semibold text-[#1A1A1A]">₹{codHandlingFee}</span>
-                </div>
-              )}
+
+              {/* Shipping and Delivery Combined summary */}
+              <div className="flex justify-between items-center border-t border-[#EDE6DA] pt-2 mt-1">
+                <span className="font-semibold text-[#1A1A1A]">Shipping & Delivery</span>
+                <span className="font-semibold text-[#1A1A1A]">₹{shippingAndDelivery.toLocaleString('en-IN')}</span>
+              </div>
             </div>
 
             {/* Loyalty Alert */}
@@ -538,7 +680,7 @@ export default function CheckoutPage() {
 
             {/* Total final */}
             <div className="flex justify-between items-center border-t border-[#EDE6DA] pt-4 text-sm font-bold text-[#1A1A1A] font-serif">
-              <span>Grand Total Amount</span>
+              <span>Grand Total</span>
               <span className="text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
             </div>
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useApp } from '../../context/AppContext';
 import { serviceDb, Product } from '../../lib/firebase';
+import { normalizeSlug } from '../../lib/slugUtils';
 import { Heart, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -54,7 +55,7 @@ export default function WishlistPage() {
               {/* Product Image Frame */}
               <div className="relative h-64 bg-gray-50 overflow-hidden">
                 <Image
-                  src={prod.images[0] || '/images/logo-burgundy.jpg'}
+                  src={(typeof prod.images[0] === 'string' ? prod.images[0] : prod.images[0]?.url) || '/images/logo-burgundy.jpg'}
                   alt={prod.name}
                   fill
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -77,7 +78,7 @@ export default function WishlistPage() {
                     {prod.category} collection
                   </span>
                   
-                  <Link href={`/product/${prod.slug}`} className="block">
+                  <Link href={`/product/${normalizeSlug(prod.slug)}`} className="block">
                     <h3 className="text-sm font-bold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors truncate mt-0.5">
                       {prod.name}
                     </h3>

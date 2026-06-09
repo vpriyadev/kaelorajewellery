@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification } from 'firebase/auth';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query } from 'firebase/firestore';
 
 // Luxury Brand Initial Products Seed
 export interface Product {
@@ -11,14 +11,35 @@ export interface Product {
   price: number;
   discountPrice: number;
   category: 'earrings' | 'chains' | 'bangles';
-  images: string[];
+  images: Array<string | { url: string; public_id?: string }>;
   stock: number;
   featured: boolean;
   bestSeller: boolean;
   rating: number;
   reviewCount: number;
   wearType: 'daily' | 'casual' | 'party' | 'traditional' | 'festive';
+  wearStyles?: string[];
   createdAt: string;
+  sku?: string; // optional SKU for product code
+  // New visibility fields
+  showOnHome?: boolean;
+  showInFeaturedCollections?: boolean;
+  showInEarrings?: boolean;
+  showInChains?: boolean;
+  showInBangles?: boolean;
+  showInTrending?: boolean;
+  showInNewArrivals?: boolean;
+  showInRecommended?: boolean;
+  showInShopByCategory?: boolean;
+  // Delivery settings
+  deliveryFee?: number;
+  freeDelivery?: boolean;
+  // Manual specifications
+  material?: string;
+  style?: string;
+  occasion?: string;
+  weight?: string;
+  availability?: string;
 }
 
 export interface Address {
@@ -26,27 +47,39 @@ export interface Address {
   userId: string;
   fullName: string;
   phone: string;
-  addressLine: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state: string;
   pincode: string;
+  country: string;
+  isDefault?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  // Legacy field for backwards compatibility
+  addressLine?: string;
 }
 
 export interface Order {
   id: string;
   userId: string;
   items: any[];
-  status: 'processing' | 'shipped' | 'delivered';
+  status: 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  orderStatus?: 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  products?: any[];
   totalAmount: number;
   shippingAddress: Address;
   paymentMethod: 'cod' | 'online';
   paymentStatus: string;
   createdAt: string;
+  cancelledBy?: { id: string; name?: string; role?: string };
+  cancelledAt?: string;
 }
 
 export interface Review {
   id: string;
   productId: string;
+  userId: string;
   userName: string;
   rating: number;
   comment: string;
@@ -54,6 +87,8 @@ export interface Review {
   approved: boolean;
   featured: boolean;
   createdAt: string;
+  editedAt?: string;
+  adminReply?: string;
 }
 
 export const INITIAL_PRODUCTS: Product[] = [
@@ -492,33 +527,7 @@ class DatabaseSimulator {
   }
 
   getReviews(): any[] {
-    // Initial Seed Reviews
-    const initialReviews = [
-      {
-        id: 'rev1',
-        productId: 'e1',
-        userId: 'u1',
-        userName: 'Priya Sharma',
-        rating: 5,
-        comment: 'Absolutely stunning! The butterfly earrings glow beautifully under sunlight. Extremely lightweight.',
-        image: '/images/logo-burgundy.jpg',
-        approved: true,
-        featured: true,
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: 'rev2',
-        productId: 'e2',
-        userId: 'u2',
-        userName: 'Aishwarya Sen',
-        rating: 5,
-        comment: 'Wore it for my cousins sangeet. Highly premium pearl and gold shine, very elegant.',
-        image: '',
-        approved: true,
-        featured: true,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      }
-    ];
+    const initialReviews: any[] = [];
     return this.getStorageItem('reviews', initialReviews);
   }
 
@@ -528,8 +537,8 @@ class DatabaseSimulator {
 
   getSettings() {
     const defaultSettings = {
-      freeShippingLimit: 400,
-      standardShippingCharge: 50,
+      freeShippingLimit: 299,
+      standardShippingCharge: 19,
       enableFreeShipping: true,
       announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
       storePhone: "+91 6305517109",
@@ -539,7 +548,67 @@ class DatabaseSimulator {
     return this.getStorageItem('settings', defaultSettings);
   }
 
+  getAddresses(uid: string): any[] {
+    const allAddresses = this.getStorageItem('addresses', {});
+    return allAddresses[uid] || [];
+  }
+
+  addAddress(uid: string, address: Address) {
+    const allAddresses = this.getStorageItem('addresses', {});
+    if (!allAddresses[uid]) {
+      allAddresses[uid] = [];
+    }
+    allAddresses[uid].push(address);
+    this.setStorageItem('addresses', allAddresses);
+  }
+
+  updateAddress(uid: string, addressId: string, updates: Partial<Address>) {
+    const allAddresses = this.getStorageItem('addresses', {});
+    if (allAddresses[uid]) {
+      const index = allAddresses[uid].findIndex((a: Address) => a.id === addressId);
+      if (index !== -1) {
+        allAddresses[uid][index] = { ...allAddresses[uid][index], ...updates };
+        this.setStorageItem('addresses', allAddresses);
+      }
+    }
+  }
+
+  deleteAddress(uid: string, addressId: string) {
+    const allAddresses = this.getStorageItem('addresses', {});
+    if (allAddresses[uid]) {
+      allAddresses[uid] = allAddresses[uid].filter((a: Address) => a.id !== addressId);
+      this.setStorageItem('addresses', allAddresses);
+    }
+  }
+
   saveSettings(settings: any) {
+    this.setStorageItem('settings', settings);
+  }
+
+  getHeroBanner() {
+    const settings = this.getStorageItem('settings', {
+      freeShippingLimit: 299,
+      standardShippingCharge: 19,
+      enableFreeShipping: true,
+      announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
+      storePhone: "+91 6305517109",
+      whatsappNumber: "+91 6305517109",
+      giftGoal: 3,
+    });
+    return settings.heroBanner || null;
+  }
+
+  saveHeroBanner(heroBanner: any) {
+    const settings = this.getStorageItem('settings', {
+      freeShippingLimit: 299,
+      standardShippingCharge: 19,
+      enableFreeShipping: true,
+      announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
+      storePhone: "+91 6305517109",
+      whatsappNumber: "+91 6305517109",
+      giftGoal: 3,
+    });
+    settings.heroBanner = heroBanner;
     this.setStorageItem('settings', settings);
   }
 }
@@ -561,9 +630,23 @@ export const serviceAuth = {
             callback({
               uid: user.uid,
               email: user.email,
-              displayName: profile?.fullName || user.displayName || 'Kaelora Guest',
-              photoURL: user.photoURL,
+              displayName: profile?.displayName || profile?.fullName || user.displayName || 'User',
+              photoURL: profile?.photoURL || user.photoURL,
               ...profile
+            });
+          }).catch((error) => {
+            console.error('[Firestore] Error fetching user profile after auth state change:', {
+              uid: user.uid,
+              errorCode: error.code,
+              errorMessage: error.message,
+              collection: 'users'
+            });
+            // Still callback with basic user info to prevent app freeze
+            callback({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName || 'User',
+              photoURL: user.photoURL
             });
           });
         } else {
@@ -601,20 +684,38 @@ export const serviceAuth = {
   signUp: async (email: string, password: string, fullName: string) => {
     if (realAuth && realDb) {
       const cred = await createUserWithEmailAndPassword(realAuth, email, password);
-      // save profile doc in firestore
+      await sendEmailVerification(cred.user);
+      // Create user document in Firestore with Kaelora specific fields
+      const userDoc = {
+        uid: cred.user.uid,
+        email: email,
+        role: "user",
+        createdAt: serverTimestamp()
+      };
+      
+      // Also save extended profile data
       const profile = {
         uid: cred.user.uid,
-        fullName,
         email,
+        fullName,
         phone: '',
+        role: "user",
         addressList: [],
         wishlist: [],
         cartItems: [],
         orders: [],
         rewardStatus: { totalItemsBought: 0, giftUnlocked: false },
-        createdAt: new Date().toISOString()
+        createdAt: serverTimestamp()
       };
+      
       await setDoc(doc(realDb, 'users', cred.user.uid), profile);
+      // set client cookie so server middleware can read role on subsequent requests
+      if (typeof window !== 'undefined') {
+        try {
+          const session = { uid: cred.user.uid, email, displayName: fullName, role: 'user' };
+          document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`;
+        } catch (e) {}
+      }
       return { uid: cred.user.uid, email, fullName };
     } else {
       const users = dbSimulator.getUsers();
@@ -627,6 +728,7 @@ export const serviceAuth = {
         fullName,
         email,
         phone: '',
+        role: "user",
         addressList: [],
         wishlist: [],
         cartItems: [],
@@ -637,22 +739,56 @@ export const serviceAuth = {
       users.push(profile);
       dbSimulator.saveUsers(users);
       
-      localStorage.setItem('kaelora_session', JSON.stringify({ uid: newUid, email, displayName: fullName }));
+      const session = { uid: newUid, email, displayName: fullName, role: 'user' };
+      localStorage.setItem('kaelora_session', JSON.stringify(session));
+      if (typeof window !== 'undefined') {
+        try { document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`; } catch(e){}
+      }
       if ((window as any).__triggerAuthSync) (window as any).__triggerAuthSync();
       return profile;
     }
   },
 
   login: async (email: string, password: string) => {
-    if (realAuth) {
+    if (realAuth && realDb) {
       const cred = await signInWithEmailAndPassword(realAuth, email, password);
+      
+      // Check if user document exists in Firestore
+      const userDocRef = doc(realDb, 'users', cred.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      // If user document doesn't exist, create it
+      if (!userDocSnap.exists()) {
+        const userDoc = {
+          uid: cred.user.uid,
+          email: cred.user.email,
+          role: "user",
+          createdAt: serverTimestamp()
+        };
+        await setDoc(userDocRef, userDoc);
+      }
+      // ensure cookie contains role from user document
+      try {
+        const refreshed = await getDoc(userDocRef);
+        const role = refreshed.exists() ? (refreshed.data() as any).role : 'user';
+        if (typeof window !== 'undefined') {
+          try {
+            const session = { uid: cred.user.uid, email: cred.user.email, displayName: cred.user.displayName || '', role };
+            document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`;
+          } catch (e) {}
+        }
+      } catch (e) {}
+
       return cred.user;
     } else {
       const users = dbSimulator.getUsers();
       // Pre-seed an admin account for test
       if (email === 'admin@kaelora.com' && password === 'admin123') {
-        const adminSession = { uid: 'admin-uid', email: 'admin@kaelora.com', displayName: 'KAELORA Admin', isAdmin: true };
+        const adminSession = { uid: 'admin-uid', email: 'admin@kaelora.com', displayName: 'KAELORA Admin', role: 'admin', isAdmin: true };
         localStorage.setItem('kaelora_session', JSON.stringify(adminSession));
+        if (typeof window !== 'undefined') {
+          try { document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(adminSession))}; path=/; max-age=${60*60*24*7}`; } catch(e){}
+        }
         if ((window as any).__triggerAuthSync) (window as any).__triggerAuthSync();
         return adminSession;
       }
@@ -662,65 +798,130 @@ export const serviceAuth = {
         throw new Error("User not found!");
       }
       // Simple passcheck (any pass works for simulator except admin check)
-      localStorage.setItem('kaelora_session', JSON.stringify({ uid: user.uid, email: user.email, displayName: user.fullName }));
+      const session = { uid: user.uid, email: user.email, displayName: user.fullName, role: user.role || 'user' };
+      localStorage.setItem('kaelora_session', JSON.stringify(session));
+      if (typeof window !== 'undefined') {
+        try { document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`; } catch(e){}
+      }
       if ((window as any).__triggerAuthSync) (window as any).__triggerAuthSync();
       return user;
     }
   },
 
   googleLogin: async () => {
-    if (realAuth) {
+    if (!realAuth || !realDb) {
+      throw new Error(
+        "Google Sign-In requires Firebase credentials. Please configure NEXT_PUBLIC_FIREBASE_* environment variables."
+      );
+    }
+
+    try {
       const provider = new GoogleAuthProvider();
       const cred = await signInWithPopup(realAuth, provider);
-      // check if profile doc exists, else create it
+
+      // Create or update user document in Firestore
       const docRef = doc(realDb, 'users', cred.user.uid);
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        const profile = {
-          uid: cred.user.uid,
-          fullName: cred.user.displayName || 'Google User',
-          email: cred.user.email || '',
-          phone: '',
-          addressList: [],
-          wishlist: [],
-          cartItems: [],
-          orders: [],
-          rewardStatus: { totalItemsBought: 0, giftUnlocked: false },
-          createdAt: new Date().toISOString()
-        };
-        await setDoc(docRef, profile);
-      }
-      return cred.user;
-    } else {
-      const newUid = 'google-' + Math.random().toString(36).substr(2, 9);
-      const profile = {
-        uid: newUid,
-        fullName: 'Google Luxury Guest',
-        email: 'guest@gmail.com',
-        phone: '',
-        addressList: [],
-        wishlist: [],
-        cartItems: [],
-        orders: [],
-        rewardStatus: { totalItemsBought: 0, giftUnlocked: false },
-        createdAt: new Date().toISOString()
-      };
-      const users = dbSimulator.getUsers();
-      users.push(profile);
-      dbSimulator.saveUsers(users);
       
-      localStorage.setItem('kaelora_session', JSON.stringify({ uid: newUid, email: profile.email, displayName: profile.fullName }));
-      if ((window as any).__triggerAuthSync) (window as any).__triggerAuthSync();
-      return profile;
+      try {
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          // Create new user document with real Google account data
+          const profile = {
+            uid: cred.user.uid,
+            email: cred.user.email,
+            displayName: cred.user.displayName,
+            photoURL: cred.user.photoURL,
+            role: "user",
+            phone: '',
+            addressList: [],
+            wishlist: [],
+            cartItems: [],
+            orders: [],
+            rewardStatus: { totalItemsBought: 0, giftUnlocked: false },
+            createdAt: serverTimestamp()
+          };
+          try {
+            await setDoc(docRef, profile);
+            console.log('[Firestore] New user document created:', { uid: cred.user.uid, email: cred.user.email });
+          } catch (writeError: any) {
+            console.error('[Firestore] Error creating user document:', {
+              uid: cred.user.uid,
+              errorCode: writeError.code,
+              errorMessage: writeError.message,
+              collection: 'users',
+              operation: 'setDoc'
+            });
+            throw writeError;
+          }
+        } else {
+          // Update existing user with latest Google profile info
+            try {
+            await setDoc(docRef, {
+              displayName: cred.user.displayName,
+              photoURL: cred.user.photoURL,
+              lastLoginAt: serverTimestamp()
+            }, { merge: true });
+            console.log('[Firestore] Existing user document merged with latest Google profile:', { uid: cred.user.uid });
+          } catch (updateError: any) {
+            console.error('[Firestore] Error merging user document:', {
+              uid: cred.user.uid,
+              errorCode: updateError.code,
+              errorMessage: updateError.message,
+              collection: 'users',
+              operation: 'setDoc(merge)'
+            });
+            throw updateError;
+          }
+        }
+        // set cookie with final role from user document
+        try {
+          const finalSnap = await getDoc(docRef);
+          const finalRole = finalSnap.exists() ? (finalSnap.data() as any).role : 'user';
+          if (typeof window !== 'undefined') {
+            try {
+              const session = { uid: cred.user.uid, email: cred.user.email, displayName: (finalSnap.exists() ? (finalSnap.data() as any).displayName : cred.user.displayName) || '', role: finalRole };
+              document.cookie = `kaelora_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${60*60*24*7}`;
+            } catch (e) {}
+          }
+        } catch (e) {}
+      } catch (firestoreError: any) {
+        console.error('[Firestore] Error in googleLogin - user document operation:', {
+          uid: cred.user.uid,
+          errorCode: firestoreError.code,
+          errorMessage: firestoreError.message,
+          collection: 'users'
+        });
+        throw firestoreError;
+      }
+
+      return cred.user;
+    } catch (error: unknown) {
+      const authError = error as { code?: string; message?: string };
+      const errorCode = authError?.code;
+      const errorMessage = authError?.message || String(error) || 'Google Sign-In failed.';
+
+      console.error('[Auth] Google Sign-In failed:', {
+        errorCode,
+        errorMessage,
+        error
+      });
+
+      throw new Error(errorMessage);
     }
   },
 
   logout: async () => {
     if (realAuth) {
       await signOut(realAuth);
-    } else {
-      localStorage.removeItem('kaelora_session');
-      if ((window as any).__triggerAuthSync) (window as any).__triggerAuthSync();
+    }
+
+    if (typeof window !== 'undefined') {
+      try { localStorage.removeItem('kaelora_session'); } catch (e) {}
+      try { document.cookie = 'kaelora_session=; path=/; max-age=0'; } catch (e) {}
+      if ((window as any).__triggerAuthSync) {
+        (window as any).__triggerAuthSync();
+      }
     }
   }
 };
@@ -728,9 +929,29 @@ export const serviceAuth = {
 export const serviceDb = {
   // User Profile methods
   getUserProfile: async (uid: string) => {
+    if (!uid) return null;
     if (realDb) {
-      const snap = await getDoc(doc(realDb, 'users', uid));
-      return snap.exists() ? snap.data() : null;
+      try {
+        const snap = await getDoc(doc(realDb, 'users', uid));
+        if (snap.exists()) {
+          return snap.data();
+        }
+        console.warn('[Firestore] User profile not found:', { uid, collection: 'users' });
+        return null;
+      } catch (error: any) {
+        // Silently return null on auth errors (e.g., permission-denied after logout)
+        if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+          return null;
+        }
+        console.error('[Firestore] Error reading user profile:', {
+          uid,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'users',
+          operation: 'getDoc'
+        });
+        throw error;
+      }
     } else {
       const users = dbSimulator.getUsers();
       return users.find(u => u.uid === uid) || null;
@@ -739,7 +960,20 @@ export const serviceDb = {
 
   updateUserProfile: async (uid: string, data: any) => {
     if (realDb) {
-      await updateDoc(doc(realDb, 'users', uid), data);
+      try {
+        await setDoc(doc(realDb, 'users', uid), data, { merge: true });
+        console.log('[Firestore] User profile set/merged:', { uid, collection: 'users' });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating user profile:', {
+          uid,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'users',
+          operation: 'updateDoc',
+          fieldsAttempted: Object.keys(data)
+        });
+        throw error;
+      }
     } else {
       const users = dbSimulator.getUsers();
       const index = users.findIndex(u => u.uid === uid);
@@ -752,53 +986,192 @@ export const serviceDb = {
   },
 
   getAddresses: async (uid: string): Promise<Address[]> => {
-    const profile = await serviceDb.getUserProfile(uid);
-    return profile?.addressList || [];
+
+    if (realDb) {
+      try {
+        const userRef = collection(realDb, `users/${uid}/addresses`);
+        const q = query(userRef);
+        const snapshot = await getDocs(q);
+        const addresses = snapshot.docs.map(doc => ({ id: doc.id, userId: uid, ...doc.data() } as Address));
+        console.log('[Firestore] Retrieved addresses:', { uid, count: addresses.length });
+        return addresses;
+      } catch (error: any) {
+        // Silently return empty on auth errors (e.g., permission-denied after logout)
+        if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+          return [];
+        }
+        console.error('[Firestore] Error fetching addresses:', { uid, errorCode: error.code, errorMessage: error.message });
+        return [];
+      }
+    } else {
+      const addresses = dbSimulator.getAddresses(uid);
+      console.log('[Simulator] Retrieved addresses:', { uid, count: addresses.length });
+      return addresses;
+    }
   },
 
-  addAddress: async (uid: string, address: Address) => {
-    const profile = await serviceDb.getUserProfile(uid);
-    if (profile) {
-      const addressList = [...(profile.addressList || []), address];
-      await serviceDb.updateUserProfile(uid, { addressList });
+  addAddress: async (uid: string, address: Omit<Address, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    const newAddress: Address = {
+      id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      userId: uid,
+      ...address,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    if (realDb) {
+      try {
+        await setDoc(doc(realDb, `users/${uid}/addresses/${newAddress.id}`), {
+          ...newAddress,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        console.log('[Firestore] Address added:', { uid, addressId: newAddress.id });
+        return newAddress;
+      } catch (error: any) {
+        console.error('[Firestore] Error adding address:', { uid, errorCode: error.code, errorMessage: error.message });
+        throw error;
+      }
+    } else {
+      dbSimulator.addAddress(uid, newAddress);
+      console.log('[Simulator] Address added:', { uid, addressId: newAddress.id });
+      return newAddress;
+    }
+  },
+
+  updateAddress: async (uid: string, addressId: string, updates: Partial<Address>) => {
+    const updateData = {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (realDb) {
+      try {
+        await setDoc(doc(realDb, `users/${uid}/addresses/${addressId}`), {
+          ...updateData,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+        console.log('[Firestore] Address updated:', { uid, addressId });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating address:', { uid, addressId, errorCode: error.code, errorMessage: error.message });
+        throw error;
+      }
+    } else {
+      dbSimulator.updateAddress(uid, addressId, updateData);
+      console.log('[Simulator] Address updated:', { uid, addressId });
     }
   },
 
   deleteAddress: async (uid: string, addressId: string) => {
     if (realDb) {
-      // Real Firestore logic would go here
-      console.log("Delete address from Firestore not yet implemented");
-    } else {
-      const users = dbSimulator.getUsers();
-      const index = users.findIndex(u => u.uid === uid);
-      if (index !== -1) {
-        users[index].addressList = users[index].addressList.filter((a: any) => a.id !== addressId);
-        dbSimulator.saveUsers(users);
+      try {
+        await deleteDoc(doc(realDb, `users/${uid}/addresses/${addressId}`));
+        console.log('[Firestore] Address deleted:', { uid, addressId });
+      } catch (error: any) {
+        console.error('[Firestore] Error deleting address:', { uid, addressId, errorCode: error.code, errorMessage: error.message });
+        throw error;
       }
+    } else {
+      dbSimulator.deleteAddress(uid, addressId);
+      console.log('[Simulator] Address deleted:', { uid, addressId });
     }
   },
 
   // Products CRUD
   getProducts: async (): Promise<Product[]> => {
     if (realDb) {
-      const snap = await getDocs(collection(realDb, 'products'));
-      const list: Product[] = [];
-      snap.forEach(doc => {
-        list.push({ id: doc.id, ...doc.data() } as Product);
-      });
-      return list.length > 0 ? list : INITIAL_PRODUCTS;
+      try {
+        const snap = await getDocs(collection(realDb, 'products'));
+        const list: Product[] = [];
+        snap.forEach(doc => {
+          list.push({ id: doc.id, ...doc.data() } as Product);
+        });
+        console.log('[Firestore] Products loaded:', { count: list.length, collection: 'products' });
+        return list.length > 0 ? list : INITIAL_PRODUCTS;
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching products:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'products',
+          operation: 'getDocs'
+        });
+        // Fallback to initial products on error
+        return INITIAL_PRODUCTS;
+      }
     } else {
       return dbSimulator.getProducts();
     }
   },
 
-  addProduct: async (product: Omit<Product, 'id'>) => {
+  // Real-time products listener. Returns unsubscribe function.
+  onProductsChanged: (callback: (products: Product[]) => void) => {
     if (realDb) {
-      const docRef = await addDoc(collection(realDb, 'products'), product);
-      return docRef.id;
+      try {
+        const q = collection(realDb, 'products');
+        const unsub = onSnapshot(q, (snap) => {
+          const list: Product[] = [];
+          snap.forEach(doc => list.push({ id: doc.id, ...doc.data() } as Product));
+          callback(list.length > 0 ? list : INITIAL_PRODUCTS);
+        }, (error) => {
+          console.error('[Firestore] onProductsChanged error:', {
+            errorCode: (error as any).code,
+            errorMessage: (error as any).message,
+            collection: 'products',
+            operation: 'onSnapshot'
+          });
+          // fallback to one-time fetch on error
+          serviceDb.getProducts().then(products => callback(products));
+        });
+        return unsub;
+      } catch (e) {
+        console.error('[Firestore] Failed to attach onSnapshot:', e);
+        // fallback to no-op
+        return () => {};
+      }
+    } else {
+      // Simulator: poll and listen to localStorage events. Return unsubscribe.
+      const poll = () => callback(dbSimulator.getProducts());
+      const interval = setInterval(poll, 2000);
+      const onStorage = (e: StorageEvent) => {
+        if (e.key && e.key.includes('kaelora_products')) poll();
+      };
+      if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+      // initial
+      poll();
+      return () => {
+        clearInterval(interval);
+        if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+      };
+    }
+  },
+
+  addProduct: async (product: Omit<Product, 'id'>) => {
+    // Ensure SKU is generated if not provided
+    const generateSku = (p: Omit<Product, 'id'>) => {
+      const source = p.name || p.category || '';
+      const prefix = source.slice(0, 3).toUpperCase();
+      const suffix = Math.random().toString(36).substr(2, 4).toUpperCase();
+      return `${prefix}-${suffix}`;
+    };
+    const productWithSku = { ...product, sku: product.sku ?? generateSku(product) };
+
+    if (realDb) {
+      try {
+        const docRef = await addDoc(collection(realDb, 'products'), productWithSku);
+        console.log('[Firestore] Product added:', { id: docRef.id, collection: 'products' });
+        return docRef.id;
+      } catch (error: any) {
+        console.error('[Firestore] Error adding product:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'products',
+          operation: 'addDoc'
+        });
+        throw error;
+      }
     } else {
       const products = dbSimulator.getProducts();
-      const newProduct = { ...product, id: 'prod-' + Math.random().toString(36).substr(2, 9) };
+      const newProduct = { ...productWithSku, id: 'prod-' + Math.random().toString(36).substr(2, 9) };
       products.push(newProduct);
       dbSimulator.saveProducts(products);
       return newProduct.id;
@@ -807,7 +1180,49 @@ export const serviceDb = {
 
   updateProduct: async (id: string, data: Partial<Product>) => {
     if (realDb) {
-      await updateDoc(doc(realDb, 'products', id), data as any);
+      try {
+        // If images are being updated, remove any Cloudinary images that were removed
+        try {
+          const existing = await getDoc(doc(realDb, 'products', id));
+          const existingData = existing.data() as any;
+          const oldImages: any[] = existingData?.images || [];
+          const newImages: any[] = (data as any)?.images || oldImages;
+          // Find removed images
+          const removed = oldImages.filter(oi => !newImages.some(ni => {
+            const oiId = typeof oi === 'string' ? null : oi?.public_id;
+            const niId = typeof ni === 'string' ? null : ni?.public_id;
+            return oi === ni || (oiId && niId && oiId === niId);
+          }));
+          for (const r of removed) {
+            try {
+              const public_id = typeof r === 'string' ? null : r?.public_id;
+              if (public_id) {
+                await fetch('/api/cloudinary/delete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ public_id }),
+                });
+              }
+            } catch (e) {
+              console.warn('Failed to cleanup removed image', e);
+            }
+          }
+        } catch (e) {
+          // Ignore errors in cleanup path
+        }
+
+        await setDoc(doc(realDb, 'products', id), data as any, { merge: true });
+        console.log('[Firestore] Product set/merged:', { id, collection: 'products' });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating product:', {
+          id,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'products',
+          operation: 'updateDoc'
+        });
+        throw error;
+      }
     } else {
       const products = dbSimulator.getProducts();
       const index = products.findIndex(p => p.id === id);
@@ -819,9 +1234,39 @@ export const serviceDb = {
   },
 
   deleteProduct: async (id: string) => {
-    // Delete in real or simulated
     if (realDb) {
-      // In real firestore, delete doc logic
+      try {
+        // First fetch product to remove associated Cloudinary images (if any)
+        const pDoc = await getDoc(doc(realDb, 'products', id));
+        const data = pDoc.data() as any;
+        const imgs = data?.images || [];
+        for (const img of imgs) {
+          try {
+            const public_id = typeof img === 'string' ? null : img?.public_id;
+            if (public_id) {
+              await fetch('/api/cloudinary/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ public_id }),
+              });
+            }
+          } catch (innerErr) {
+            console.warn('[Cloudinary] failed to delete image for product', id, innerErr);
+          }
+        }
+
+        await deleteDoc(doc(realDb, 'products', id));
+        console.log('[Firestore] Product deleted:', { id, collection: 'products' });
+      } catch (error: any) {
+        console.error('[Firestore] Error deleting product:', {
+          id,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'products',
+          operation: 'deleteDoc'
+        });
+        throw error;
+      }
     } else {
       const products = dbSimulator.getProducts();
       const filtered = products.filter(p => p.id !== id);
@@ -831,18 +1276,38 @@ export const serviceDb = {
 
   // Orders CRUD
   getOrders: async (uid?: string): Promise<any[]> => {
+
     if (realDb) {
-      const snap = await getDocs(collection(realDb, 'orders'));
-      const list: any[] = [];
-      snap.forEach(doc => {
-        const data = doc.data();
-        if (!uid || data.userId === uid) {
-          list.push({ id: doc.id, ...data });
+      try {
+        const snap = await getDocs(collection(realDb, 'orders'));
+        const list: any[] = [];
+        snap.forEach(doc => {
+          const data = doc.data();
+          if (!uid || data.userId === uid) {
+            list.push({ id: doc.id, ...data });
+          }
+        });
+        console.log('[Firestore] Orders loaded:', { count: list.length, userId: uid || 'all', collection: 'orders' });
+        return list;
+      } catch (error: any) {
+        // Silently return empty on auth errors (e.g., permission-denied after logout)
+        if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+          return [];
         }
-      });
-      return list;
+        console.error('[Firestore] Error fetching orders:', {
+          userId: uid,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'orders',
+          operation: 'getDocs'
+        });
+        // Return empty array on error to prevent app freeze
+        return [];
+      }
     } else {
       let orders = dbSimulator.getOrders();
+      console.log('Orders fetched (simulator):', orders);
+      console.log('Orders count (simulator):', orders.length);
       if (uid) {
         orders = orders.filter((o: any) => o.userId === uid);
       }
@@ -850,10 +1315,44 @@ export const serviceDb = {
     }
   },
 
+  getUsers: async (): Promise<any[]> => {
+    if (realDb) {
+      try {
+        const snap = await getDocs(collection(realDb, 'users'));
+        const list: any[] = [];
+        snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+        console.log('[Firestore] Users loaded:', { count: list.length, collection: 'users' });
+        return list;
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching users:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'users',
+          operation: 'getDocs'
+        });
+        return [];
+      }
+    } else {
+      return dbSimulator.getUsers();
+    }
+  },
+
   createOrder: async (order: any) => {
     if (realDb) {
-      const docRef = await addDoc(collection(realDb, 'orders'), order);
-      return docRef.id;
+      try {
+        const docRef = await addDoc(collection(realDb, 'orders'), order);
+        console.log('[Firestore] Order created:', { orderId: docRef.id, userId: order.userId, collection: 'orders' });
+        return docRef.id;
+      } catch (error: any) {
+        console.error('[Firestore] Error creating order:', {
+          userId: order.userId,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'orders',
+          operation: 'addDoc'
+        });
+        throw error;
+      }
     } else {
       const orders = dbSimulator.getOrders();
       const orderId = 'KAEL-' + Math.floor(100000 + Math.random() * 900000);
@@ -874,20 +1373,111 @@ export const serviceDb = {
           }
         });
       }
-      
       return orderId;
     }
   },
 
-  updateOrderStatus: async (orderId: string, status: string) => {
+  updateOrderStatus: async (orderId: string, newStatus: string, metadata?: any) => {
+    const status = newStatus.toLowerCase();
     if (realDb) {
-      await updateDoc(doc(realDb, 'orders', orderId), { orderStatus: status });
+      try {
+        const orderRef = doc(realDb, 'orders', orderId);
+        const snap = await getDoc(orderRef);
+        if (!snap.exists()) throw new Error('Order not found');
+        
+        const orderData = snap.data() as any;
+        const currentStatus = (orderData.status || orderData.orderStatus || '').toLowerCase();
+        
+        if (currentStatus === status) {
+          console.log('[Firestore] Status already set to', status, 'for order', orderId);
+          return;
+        }
+
+        console.log("Admin Status Update", { orderId, from: currentStatus, to: status });
+        const updatePayload: any = { lastUpdated: serverTimestamp(), status: status, orderStatus: status };
+        if (status === 'shipped' && metadata?.trackingNumber) {
+          updatePayload.trackingNumber = metadata.trackingNumber;
+        }
+        if (status === 'cancelled') {
+          if (metadata?.cancelledBy) updatePayload.cancelledBy = metadata.cancelledBy;
+          updatePayload.cancelledAt = serverTimestamp();
+        }
+        
+        await setDoc(orderRef, updatePayload, { merge: true });
+        console.log('[Firestore] Order status set/merged:', { orderId, status: status, collection: 'orders' });
+console.log("ORDER STATUS UPDATED:", status);
+console.log("EMAIL RECIPIENT:", orderData.email);
+
+        try {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: status,
+              customerName: orderData.customerName || orderData.fullName || '',
+              customerEmail: orderData.email,
+              orderId,
+              amountPaid: orderData.totalAmount,
+              products: orderData.products || orderData.items,
+              shippingAddress: orderData.shippingAddress
+            })
+          });
+          console.log('[Email] Notification sent for status:', status);
+        } catch (emailErr) {
+          console.error('[Email] Failed to send status update email:', emailErr);
+        }
+      } catch (error: any) {
+        console.error("Firestore Status Update Error:", {
+          code: error?.code,
+          message: error?.message,
+          orderId,
+          status: status
+        });
+        throw error;
+      }
     } else {
       const orders = dbSimulator.getOrders();
-      const index = orders.findIndex(o => o.orderId === orderId);
-      if (index !== -1) {
-        orders[index].orderStatus = status;
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        const existing = orders[idx];
+        const currentStatus = (existing.status || existing.orderStatus || '').toLowerCase();
+        
+        if (currentStatus === status) {
+          console.log('[Simulator] Status already set to', status, 'for order', orderId);
+          return;
+        }
+
+        console.log("Admin Status Update", { orderId, from: currentStatus, to: status });
+        const updated = {
+          ...existing,
+          status: status,
+          orderStatus: status,
+          ...(status === 'shipped' && metadata?.trackingNumber ? { trackingNumber: metadata.trackingNumber } : {}),
+          ...(status === 'cancelled' ? { cancelledBy: metadata?.cancelledBy, cancelledAt: new Date().toISOString() } : {})
+        };
+        orders[idx] = updated;
         dbSimulator.saveOrders(orders);
+        console.log('[Simulator] Order status updated:', { orderId, status: status });
+        try {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: status,
+              customerName: updated.customerName || updated.fullName || '',
+              customerEmail: updated.email,
+              orderId,
+              amountPaid: updated.totalAmount,
+              products: updated.products || updated.items,
+              shippingAddress: updated.shippingAddress
+            })
+          });
+          console.log('[Email] Notification sent for status (simulator):', status);
+        } catch (emailErr) {
+          console.error('[Email] Failed to send status update email (simulator):', emailErr);
+        }
+      } else {
+        throw new Error('Order not found in simulator');
       }
     }
   },
@@ -895,12 +1485,24 @@ export const serviceDb = {
   // Reviews CRUD
   getReviews: async (): Promise<any[]> => {
     if (realDb) {
-      const snap = await getDocs(collection(realDb, 'reviews'));
-      const list: any[] = [];
-      snap.forEach(doc => {
-        list.push({ id: doc.id, ...doc.data() });
-      });
-      return list;
+      try {
+        const snap = await getDocs(collection(realDb, 'reviews'));
+        const list: any[] = [];
+        snap.forEach(doc => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+        console.log('[Firestore] Reviews loaded:', { count: list.length, collection: 'reviews' });
+        return list;
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching reviews:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'reviews',
+          operation: 'getDocs'
+        });
+        // Return empty array on error
+        return [];
+      }
     } else {
       return dbSimulator.getReviews();
     }
@@ -908,47 +1510,170 @@ export const serviceDb = {
 
   addReview: async (review: any) => {
     if (realDb) {
-      await addDoc(collection(realDb, 'reviews'), review);
+      try {
+        const docRef = await addDoc(collection(realDb, 'reviews'), review);
+        console.log('[Firestore] Review added:', { id: docRef.id, productId: review.productId, collection: 'reviews' });
+        await serviceDb.recalculateProductRating(review.productId);
+        return docRef.id;
+      } catch (error: any) {
+        console.error('[Firestore] Error adding review:', {
+          productId: review.productId,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'reviews',
+          operation: 'addDoc'
+        });
+        throw error;
+      }
     } else {
       const reviews = dbSimulator.getReviews();
       const newReview = { 
         ...review, 
         id: 'rev-' + Math.random().toString(36).substr(2, 9),
-        approved: false, // Default is pending moderation
-        featured: false,
-        createdAt: new Date().toISOString()
+        approved: review.approved ?? true, // Default is approved to display instantly
+        featured: review.featured ?? false,
+        createdAt: review.createdAt || new Date().toISOString()
       };
       reviews.unshift(newReview);
       dbSimulator.saveReviews(reviews);
+      await serviceDb.recalculateProductRating(review.productId);
+      return newReview.id;
     }
   },
 
   approveReview: async (reviewId: string) => {
+    let productId: string | undefined;
     if (realDb) {
-      await updateDoc(doc(realDb, 'reviews', reviewId), { approved: true });
+      try {
+        const snap = await getDoc(doc(realDb, 'reviews', reviewId));
+        if (snap.exists()) productId = snap.data().productId;
+        await setDoc(doc(realDb, 'reviews', reviewId), { approved: true }, { merge: true });
+        console.log('[Firestore] Review set/merged as approved:', { reviewId, collection: 'reviews' });
+        if (productId) await serviceDb.recalculateProductRating(productId);
+      } catch (error: any) {
+        console.error('[Firestore] Error approving review:', error);
+        throw error;
+      }
     } else {
       const reviews = dbSimulator.getReviews();
       const index = reviews.findIndex(r => r.id === reviewId);
       if (index !== -1) {
         reviews[index].approved = true;
+        productId = reviews[index].productId;
         dbSimulator.saveReviews(reviews);
+        if (productId) await serviceDb.recalculateProductRating(productId);
       }
     }
   },
 
   rejectOrDeleteReview: async (reviewId: string) => {
+    let productId: string | undefined;
     if (realDb) {
-      // In real firestore, delete doc logic
+      try {
+        const snap = await getDoc(doc(realDb, 'reviews', reviewId));
+        if (snap.exists()) productId = snap.data().productId;
+        await deleteDoc(doc(realDb, 'reviews', reviewId));
+        console.log('[Firestore] Review deleted:', { reviewId, collection: 'reviews' });
+        if (productId) await serviceDb.recalculateProductRating(productId);
+      } catch (error: any) {
+        console.error('[Firestore] Error deleting review:', error);
+        throw error;
+      }
     } else {
       const reviews = dbSimulator.getReviews();
-      const filtered = reviews.filter(r => r.id !== reviewId);
-      dbSimulator.saveReviews(filtered);
+      const index = reviews.findIndex(r => r.id === reviewId);
+      if (index !== -1) {
+        productId = reviews[index].productId;
+        const filtered = reviews.filter(r => r.id !== reviewId);
+        dbSimulator.saveReviews(filtered);
+        if (productId) await serviceDb.recalculateProductRating(productId);
+      }
     }
+  },
+
+  updateReview: async (reviewId: string, data: any) => {
+    let productId = data.productId;
+    if (realDb) {
+      try {
+        if (!productId) {
+          const snap = await getDoc(doc(realDb, 'reviews', reviewId));
+          if (snap.exists()) productId = snap.data().productId;
+        }
+        await setDoc(doc(realDb, 'reviews', reviewId), data, { merge: true });
+        console.log('[Firestore] Review updated:', { reviewId, collection: 'reviews' });
+        if (productId) await serviceDb.recalculateProductRating(productId);
+      } catch (error: any) {
+        console.error('[Firestore] Error updating review:', error);
+        throw error;
+      }
+    } else {
+      const reviews = dbSimulator.getReviews();
+      const index = reviews.findIndex(r => r.id === reviewId);
+      if (index !== -1) {
+        reviews[index] = { ...reviews[index], ...data };
+        productId = reviews[index].productId;
+        dbSimulator.saveReviews(reviews);
+        if (productId) await serviceDb.recalculateProductRating(productId);
+      }
+    }
+  },
+
+  recalculateProductRating: async (productId: string) => {
+    try {
+      const allReviews = await serviceDb.getReviews();
+      // Only include approved reviews for the average rating
+      const productReviews = allReviews.filter(r => r.productId === productId && r.approved);
+      const reviewCount = productReviews.length;
+      let rating = 0;
+      if (reviewCount > 0) {
+        const total = productReviews.reduce((sum, r) => sum + r.rating, 0);
+        rating = Number((total / reviewCount).toFixed(1));
+      }
+      
+      if (realDb) {
+        await setDoc(doc(realDb, 'products', productId), { rating, reviewCount }, { merge: true });
+      } else {
+        const products = dbSimulator.getProducts();
+        const index = products.findIndex(p => p.id === productId);
+        if (index !== -1) {
+          products[index].rating = rating;
+          products[index].reviewCount = reviewCount;
+          dbSimulator.saveProducts(products);
+        }
+      }
+    } catch (e) {
+      console.error('[Firestore] Error recalculating product rating:', e);
+    }
+  },
+
+  getStoreReviewStats: async () => {
+    const allReviews = await serviceDb.getReviews();
+    const approvedReviews = allReviews.filter(r => r.approved);
+    const totalReviews = approvedReviews.length;
+    let averageRating = 0;
+    if (totalReviews > 0) {
+      const total = approvedReviews.reduce((sum, r) => sum + r.rating, 0);
+      averageRating = Number((total / totalReviews).toFixed(1));
+    }
+    return { totalReviews, averageRating };
   },
 
   featureReview: async (reviewId: string, feature: boolean) => {
     if (realDb) {
-      await updateDoc(doc(realDb, 'reviews', reviewId), { featured: feature });
+      try {
+        await setDoc(doc(realDb, 'reviews', reviewId), { featured: feature }, { merge: true });
+        console.log('[Firestore] Review set/merged featured flag:', { reviewId, featured: feature, collection: 'reviews' });
+      } catch (error: any) {
+        console.error('[Firestore] Error featuring review:', {
+          reviewId,
+          featured: feature,
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'reviews',
+          operation: 'updateDoc'
+        });
+        throw error;
+      }
     } else {
       const reviews = dbSimulator.getReviews();
       const index = reviews.findIndex(r => r.id === reviewId);
@@ -962,8 +1687,21 @@ export const serviceDb = {
   // Settings CRUD
   getSettings: async () => {
     if (realDb) {
-      const snap = await getDoc(doc(realDb, 'settings', 'global'));
-      return snap.exists() ? snap.data() : dbSimulator.getSettings();
+      try {
+        const snap = await getDoc(doc(realDb, 'settings', 'global'));
+        const settings = snap.exists() ? snap.data() : dbSimulator.getSettings();
+        console.log('[Firestore] Settings loaded:', { collection: 'settings' });
+        return settings;
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching settings:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings',
+          operation: 'getDoc'
+        });
+        // Fallback to simulator settings on error
+        return dbSimulator.getSettings();
+      }
     } else {
       return dbSimulator.getSettings();
     }
@@ -971,23 +1709,111 @@ export const serviceDb = {
 
   updateSettings: async (settings: any) => {
     if (realDb) {
-      await setDoc(doc(realDb, 'settings', 'global'), settings);
+      try {
+        await setDoc(doc(realDb, 'settings', 'global'), settings);
+        console.log('[Firestore] Settings updated:', { collection: 'settings' });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating settings:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings',
+          operation: 'setDoc'
+        });
+        throw error;
+      }
     } else {
       dbSimulator.saveSettings(settings);
     }
-  }
-};
+  },
 
-export const serviceStorage = {
-  uploadImage: async (file: File): Promise<string> => {
-    // Simulator reads the file as base64 string
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result as string);
+  getHeroBanner: async () => {
+    if (realDb) {
+      try {
+        const snap = await getDoc(doc(realDb, 'settings', 'heroBanner'));
+        const heroBanner = snap.exists() ? snap.data() : null;
+        console.log('[Firestore] Hero banner loaded:', { collection: 'settings/homepage/hero' });
+        return heroBanner;
+      } catch (error: any) {
+        console.error('[Firestore] Error fetching hero banner:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings/homepage/hero',
+          operation: 'getDoc'
+        });
+        return dbSimulator.getHeroBanner();
+      }
+    } else {
+      return dbSimulator.getHeroBanner();
+    }
+  },
+
+  updateHeroBanner: async (heroBanner: any) => {
+    if (realDb) {
+      try {
+        await setDoc(doc(realDb, 'settings', 'heroBanner'), heroBanner);
+        console.log('[Firestore] Hero banner updated:', { collection: 'settings/homepage/hero' });
+      } catch (error: any) {
+        console.error('[Firestore] Error updating hero banner:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings/homepage/hero',
+          operation: 'setDoc'
+        });
+        throw error;
+      }
+    } else {
+      dbSimulator.saveHeroBanner(heroBanner);
+    }
+  },
+
+  onHeroBannerChanged: (callback: (banner: any) => void) => {
+    if (realDb) {
+      try {
+        const unsub = onSnapshot(doc(realDb, 'settings','heroBanner'), (snap) => {
+          const heroBanner = snap.exists() ? snap.data() : null;
+          callback(heroBanner);
+        }, (error) => {
+          console.error('[Firestore] onHeroBannerChanged error:', {
+            errorCode: (error as any).code,
+            errorMessage: (error as any).message,
+            collection: 'settings/homepage/hero',
+            operation: 'onSnapshot'
+          });
+          serviceDb.getHeroBanner().then(callback).catch(() => callback(null));
+        });
+        return unsub;
+      } catch (e) {
+        console.error('[Firestore] Failed to attach hero banner snapshot listener:', e);
+        return () => {};
+      }
+    } else {
+      const poll = () => callback(dbSimulator.getHeroBanner());
+      const interval = setInterval(poll, 2000);
+      const onStorage = (e: StorageEvent) => {
+        if (e.key && e.key.includes('kaelora_settings')) poll();
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+      if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+      poll();
+      return () => {
+        clearInterval(interval);
+        if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+      };
+    }
+  },
+
+  logEmailDelivery: async (logData: any) => {
+    if (realDb) {
+      try {
+        await addDoc(collection(realDb, 'emailLogs'), {
+          ...logData,
+          createdAt: serverTimestamp()
+        });
+        console.log('[Firestore] Email log added');
+      } catch (error) {
+        console.error('[Firestore] Error adding email log:', error);
+      }
+    } else {
+      console.log('[Simulator] Email log added', logData);
+    }
   }
 };

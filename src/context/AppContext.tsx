@@ -1,8 +1,15 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { serviceAuth, serviceDb, serviceStorage, Product, Address, Order } from '../lib/firebase';
+import { useRouter } from 'next/navigation';
+import { serviceAuth, serviceDb, Product, Address, Order } from '../lib/firebase';
+import { uploadToCloudinary } from '../lib/cloudinary';
 import { User as FirebaseUser } from 'firebase/auth';
+
+const ADMIN_EMAIL_WHITELIST = [
+  'vishnupriyareddy0711@gmail.com',
+  'jashujash1107@gmail.com'
+];
 
 interface CartItem {
   product: Product;
@@ -15,6 +22,7 @@ interface User extends FirebaseUser {
     giftUnlocked: boolean;
   };
   isAdmin?: boolean;
+  role?: string;
 }
 
 export interface ToastMessage {
@@ -38,10 +46,12 @@ interface AppContextType {
   login: (email: string, pass: string) => Promise<void>;
   signUp: (email: string, pass: string, name: string) => Promise<void>;
   googleLogin: () => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (options?: { silent?: boolean }) => Promise<void>;
   authModalOpen: boolean;
   setAuthModalOpen: (open: boolean) => void;
   interceptAuthAction: (action: () => void) => void;
+  sanitizeError: (error: any) => string;
+  justSignedOut: boolean;
   // Cart actions
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
@@ -51,13 +61,16 @@ interface AppContextType {
   toggleWishlist: (productId: string) => void;
   moveToCart: (productId: string) => void;
   // Order actions
-  placeOrder: (address: Address) => Promise<string>;
-  checkoutCart: (address: Address, paymentMethod: string) => Promise<any>;
+  placeOrder: (address: Address) => Promise<Order>;
+  checkoutCart: (address: Address) => Promise<Order>;
+  cancelOrder: (orderId: string) => Promise<void>;
   // Address actions
-  addAddress: (address: Address) => Promise<void>;
+  addAddress: (address: Omit<Address, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<Address>;
+  updateAddress: (addressId: string, updates: Partial<Address>) => Promise<void>;
   deleteAddress: (addressId: string) => Promise<void>;
   // Reviews actions
   addReview: (productId: string, rating: number, comment: string, file: File | null) => Promise<void>;
+  updateReview: (reviewId: string, rating: number, comment: string, file: File | null) => Promise<void>;
   // Admin actions
   adminAddProduct: (prod: Omit<Product, 'id'>) => Promise<void>;
   adminEditProduct: (id: string, prod: Partial<Product>) => Promise<void>;
@@ -72,6 +85,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -79,8 +93,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [orders, setOrders] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({
-    freeShippingLimit: 400,
-    standardShippingCharge: 50,
+    freeShippingLimit: 299,
+    standardShippingCharge: 19,
     enableFreeShipping: true,
     announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
     storePhone: "+91 6305517109",
@@ -90,6 +104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   // Toast notifications
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [justSignedOut, setJustSignedOut] = useState(false);
 
   // Auth Interceptor Modal states
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -99,6 +114,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const id = Math.random().toString(36).substr(2, 9);
     setToasts(prev => [...prev, { id, text, type }]);
     setTimeout(() => dismissToast(id), 4000);
+  };
+
+  const sanitizeError = (error: any) => {
+    try {
+      const code = error?.code || '';
+      const msg = String(error?.message || error || '');
+      // Map known auth/firestore codes to friendly messages
+      if (code.includes('auth/user-not-found') || msg.toLowerCase().includes('user not found') || msg.toLowerCase().includes('no user')) {
+        return 'Invalid email or password';
+      }
+      if (code.includes('auth/wrong-password') || msg.toLowerCase().includes('password')) {
+        return 'Invalid email or password';
+      }
+      if (code.includes('permission-denied') || code.includes('unauthenticated') || msg.toLowerCase().includes('permission-denied')) {
+        return 'Please sign in again to continue.';
+      }
+      // Generic fallback for auth issues
+      if (code.startsWith('auth/') || msg.toLowerCase().includes('firebase')) {
+        return 'Authentication failed. Please try again.';
+      }
+      // Default: return a safe, user-friendly message
+      return msg || 'Something went wrong. Please try again.';
+    } catch (e) {
+      return 'Something went wrong. Please try again.';
+    }
   };
 
   const dismissToast = (id: string) => {
@@ -118,39 +158,83 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 1. Load System Settings, Reviews, and Products initially
   useEffect(() => {
-    serviceDb.getSettings().then(setSettings);
-    serviceDb.getReviews().then(setReviews);
+    serviceDb.getSettings()
+      .then(setSettings)
+      .catch((error) => {
+        console.error('[AppContext] Error loading settings:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'settings'
+        });
+      });
+    
+    serviceDb.getReviews()
+      .then(setReviews)
+      .catch((error) => {
+        console.error('[AppContext] Error loading reviews:', {
+          errorCode: error.code,
+          errorMessage: error.message,
+          collection: 'reviews'
+        });
+      });
   }, []);
+
+  const clearUserState = () => {
+    setCart([]);
+    setWishlist([]);
+    setOrders([]);
+    setPendingAction(null);
+    setAuthModalOpen(false);
+  };
 
   // 2. Watch Auth State Changes
   useEffect(() => {
     const unsubscribe = serviceAuth.onStateChanged((currentUser) => {
-      setUser(currentUser);
+      const isWhitelistedEmail = !!currentUser?.email && ADMIN_EMAIL_WHITELIST.includes(currentUser.email.toLowerCase());
+      const emailVerified = currentUser?.emailVerified === undefined ? true : currentUser.emailVerified;
+      // Determine admin: explicit role 'admin' OR whitelisted email
+      const isAdmin = (currentUser?.role === 'admin') || (isWhitelistedEmail && emailVerified);
+
+      // Preserve role if provided by session
+      const enrichedUser = currentUser ? { ...currentUser, role: currentUser.role ?? undefined, isAdmin } : null;
+      setUser(enrichedUser);
       setLoadingAuth(false);
-      
-      if (currentUser) {
-        // Sync cart & wishlist from database
+
+      if (!currentUser) {
+        clearUserState();
+        return;
+      }
+
+      if (isAdmin) {
+        clearUserState();
+      } else {
+        // Sync cart & wishlist from database for normal users only
         setWishlist(currentUser.wishlist || []);
         setCart(currentUser.cartItems || []);
-        
-        // Fetch User Orders
-        serviceDb.getOrders().then((allOrders) => {
-          const userOrders = allOrders.filter(o => o.userId === currentUser.uid);
-          setOrders(userOrders);
-        });
 
-        // Trigger pending action if any
-        if (pendingAction) {
-          setTimeout(() => {
-            pendingAction();
-            setPendingAction(null);
-          }, 100);
-          setAuthModalOpen(false);
-        }
-      } else {
-        setCart([]);
-        setWishlist([]);
-        setOrders([]);
+        // Fetch only this user's orders
+        serviceDb.getOrders(currentUser.uid)
+          .then((userOrders) => {
+            setOrders(userOrders);
+          })
+          .catch((error) => {
+            console.error('[AppContext] Error loading user orders:', {
+              uid: currentUser.uid,
+              errorCode: error.code,
+              errorMessage: error.message,
+              collection: 'orders'
+            });
+            setOrders([]);
+          });
+      }
+
+      // Trigger pending action if any
+      if (pendingAction) {
+        setTimeout(() => {
+          pendingAction();
+          setPendingAction(null);
+        }, 100);
+        setAuthModalOpen(false);
       }
     });
 
@@ -173,9 +257,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     triggerToast("Successfully signed in with Google!", "success");
   };
 
-  const logout = async () => {
+  const logout = async (options: { silent?: boolean } = {}) => {
     await serviceAuth.logout();
-    triggerToast("Logged out successfully. See you again soon!", "info");
+    setUser(null);
+    clearUserState();
+
+    // Mark recently signed out to avoid repeated auth popups/toasts
+    setJustSignedOut(true);
+    setTimeout(() => setJustSignedOut(false), 2500);
+
+    if (!options.silent) {
+      triggerToast('You have been signed out successfully.', 'info');
+    }
+
+    // Redirect to home after logout
+    router.push('/');
   };
 
   // Sync Cart to db on state change
@@ -211,6 +307,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       await saveCartState(updatedCart);
+      console.log('Cart Items:', updatedCart);
+      console.log('Delivery Fees:', updatedCart.map(item => item.product.deliveryFee || 0));
       triggerToast(`✨ Added "${product.name}" to cart!`, "success");
     };
 
@@ -290,8 +388,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!user) throw new Error("Authentication required!");
 
     const subtotal = cart.reduce((acc, item) => acc + (item.product.discountPrice * item.quantity), 0);
+    const productDeliveryFee = cart.reduce((acc, item) => {
+      return item.product.freeDelivery ? acc : acc + ((item.product.deliveryFee || 0) * item.quantity);
+    }, 0);
     const shipping = subtotal >= settings.freeShippingLimit || !settings.enableFreeShipping ? 0 : settings.standardShippingCharge;
-    const totalAmount = subtotal + shipping;
+    const totalAmount = subtotal + productDeliveryFee + shipping;
 
     // Est delivery logic (based on pincode)
     const pincode = address.pincode;
@@ -307,29 +408,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const estDeliveryDate = new Date();
     estDeliveryDate.setDate(estDeliveryDate.getDate() + days);
 
+    const orderProducts = cart.map(item => ({
+      id: item.product.id,
+      productName: item.product.name,
+      slug: item.product.slug,
+      price: item.product.discountPrice,
+      productImage: typeof item.product.images[0] === 'string' ? item.product.images[0] : item.product.images[0]?.url,
+      quantity: item.quantity
+    }));
+
     const orderData = {
       userId: user.uid,
       customerName: address.fullName,
       phone: address.phone,
+      shippingAddress: address,
       address: `${address.addressLine}, ${address.city}, ${address.state} - ${address.pincode}`,
-      products: cart.map(item => ({
-        id: item.product.id,
-        name: item.product.name,
-        slug: item.product.slug,
-        price: item.product.discountPrice,
-        image: item.product.images[0],
-        quantity: item.quantity
-      })),
-      amount: totalAmount,
+      items: orderProducts,
+      products: orderProducts,
+      status: 'processing' as const,
+      totalAmount: totalAmount,
+      subtotal: subtotal,
+      productDeliveryFee: productDeliveryFee,
       shippingCharge: shipping,
+      shippingFee: shipping,
       estimatedDelivery: estDeliveryDate.toISOString(),
-      paymentStatus: 'Paid', // Assuming secure instant payment
-      orderStatus: 'Confirmed',
+      paymentMethod: 'online',
+      paymentStatus: 'paid', // Assuming secure instant payment
+      paymentVerified: true,
+      orderStatus: 'processing',
       createdAt: new Date().toISOString()
     };
 
     const newOrderId = await serviceDb.createOrder(orderData);
-    
+    const createdOrder = {
+      id: newOrderId,
+      ...orderData
+    } as Order;
+
     // Add to local state orders
     setOrders(prev => [{ orderId: newOrderId, ...orderData }, ...prev]);
     
@@ -361,32 +476,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     await clearCart();
-    return newOrderId;
+    return createdOrder;
   };
 
   // Checkout Cart (alias for placeOrder)
-  const checkoutCart = async (address: Address, _paymentMethod: string) => {
+  const checkoutCart = async (address: Address) => {
     return await placeOrder(address);
   };
 
   // Address Management
-  const addAddress = async (address: Address) => {
+  const addAddress = async (address: Omit<Address, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     if (!user) throw new Error("Authentication required!");
-    await serviceDb.addAddress(user.uid, address);
+    const newAddress = await serviceDb.addAddress(user.uid, address);
+    triggerToast('Address added successfully.', 'success');
+    return newAddress;
+  };
+
+  const updateAddress = async (addressId: string, updates: Partial<Address>) => {
+    if (!user) throw new Error("Authentication required!");
+    await serviceDb.updateAddress(user.uid, addressId, updates);
+    triggerToast('Address updated successfully.', 'success');
   };
 
   const deleteAddress = async (addressId: string) => {
     if (!user) throw new Error("Authentication required!");
     await serviceDb.deleteAddress(user.uid, addressId);
+    triggerToast('Address deleted successfully.', 'success');
   };
 
   // Submit Review
   const addReview = async (productId: string, rating: number, comment: string, file: File | null) => {
     if (!user) throw new Error("Auth required to review products");
 
+    // Check for duplicate review by this user for this product
+    const existingReview = reviews.find(r => r.productId === productId && r.userId === user.uid);
+    if (existingReview) {
+      await updateReview(existingReview.id, rating, comment, file);
+      return;
+    }
+
     let imageUrl = '';
     if (file) {
-      imageUrl = await serviceStorage.uploadImage(file);
+      try {
+        const res = await uploadToCloudinary(file);
+        imageUrl = res.secure_url;
+      } catch (err) {
+        console.warn('Failed to upload review image', err);
+        imageUrl = '';
+      }
     }
 
     const reviewData = {
@@ -396,12 +533,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       rating,
       comment,
       image: imageUrl,
-      approved: false,
-      featured: false
+      approved: true, // Auto-approve to display instantly
+      featured: false,
+      createdAt: new Date().toISOString()
     };
 
     await serviceDb.addReview(reviewData);
-    triggerToast("✨ Review submitted for moderation! Thank you.", "success");
+    triggerToast("✨ Review submitted! Thank you.", "success");
+    
+    // Reload reviews list
+    const updatedReviews = await serviceDb.getReviews();
+    setReviews(updatedReviews);
+  };
+
+  const updateReview = async (reviewId: string, rating: number, comment: string, file: File | null) => {
+    if (!user) throw new Error("Auth required to review products");
+
+    const updateData: any = {
+      rating,
+      comment,
+      approved: true,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (file) {
+      try {
+        const res = await uploadToCloudinary(file);
+        updateData.image = res.secure_url;
+      } catch (err) {
+        console.warn('Failed to upload review image', err);
+      }
+    }
+
+    await serviceDb.updateReview(reviewId, updateData);
+    triggerToast("✨ Review updated successfully!", "success");
     
     // Reload reviews list
     const updatedReviews = await serviceDb.getReviews();
@@ -431,6 +596,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     
     // Refresh orders in state
     setOrders(prev => prev.map(o => o.orderId === orderId ? { ...o, orderStatus: status } : o));
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    if (!user) throw new Error('Authentication required to cancel order');
+    const metadata = { cancelledBy: { id: user.uid, name: user.displayName || user.email || 'User', role: user.isAdmin ? 'admin' : 'user' } };
+    await serviceDb.updateOrderStatus(orderId, 'cancelled', metadata);
+    triggerToast('Order cancelled successfully.', 'success');
+
+    // Refresh user's orders
+    try {
+      const fresh = await serviceDb.getOrders(user.uid);
+      setOrders(fresh);
+    } catch (e) {
+      // Fallback: update local orders state
+      setOrders(prev => prev.map(o => {
+        const id = (o.id || o.orderId);
+        if (id === orderId) return { ...o, status: 'cancelled', orderStatus: 'cancelled', cancelledBy: metadata.cancelledBy, cancelledAt: new Date().toISOString() };
+        return o;
+      }));
+    }
   };
 
   const adminApproveReview = async (reviewId: string) => {
@@ -471,9 +656,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user, loadingAuth, cart, wishlist, orders, reviews, settings, toasts, triggerToast, dismissToast,
       login, signUp, googleLogin, logout, authModalOpen, setAuthModalOpen, interceptAuthAction,
       addToCart, removeFromCart, updateCartQuantity, clearCart,
-      toggleWishlist, moveToCart, placeOrder, checkoutCart, addAddress, deleteAddress, addReview,
+      toggleWishlist, moveToCart, placeOrder, checkoutCart, addAddress, updateAddress, deleteAddress, addReview, updateReview,
       adminAddProduct, adminEditProduct, adminDeleteProduct, adminUpdateOrderStatus,
-      adminApproveReview, adminRejectReview, adminFeatureReview, adminUpdateSettings
+      cancelOrder,
+      adminApproveReview, adminRejectReview, adminFeatureReview, adminUpdateSettings,
+      sanitizeError, justSignedOut
     }}>
       {children}
     </AppContext.Provider>

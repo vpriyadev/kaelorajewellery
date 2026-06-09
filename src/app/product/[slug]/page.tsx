@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { serviceDb, Product, dbSimulator } from '../../../lib/firebase';
+import { serviceDb, Product } from '../../../lib/firebase';
 import { useApp } from '../../../context/AppContext';
 import ProductCard from '../../../components/ProductCard';
+import { normalizeSlug } from '../../../lib/slugUtils';
 import { Heart, ShoppingBag, Truck, Share2, Copy, CheckCircle2, ChevronRight, AlertCircle, Camera, Loader2 } from 'lucide-react';
 
 export default function ProductDetailsPage() {
@@ -21,6 +22,9 @@ export default function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [zoomScale, setZoomScale] = useState(1);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [approvedReviews, setApprovedReviews] = useState<any[]>([]);
+  const [hasExistingReview, setHasExistingReview] = useState(false);
+const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews' | 'faq'>('description');
 
   // Pincode Delivery check
   const [pincode, setPincode] = useState('');
@@ -31,7 +35,7 @@ export default function ProductDetailsPage() {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewPhoto, setReviewPhoto] = useState<File | null>(null);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'reviews'>('details');
+
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -39,9 +43,13 @@ export default function ProductDetailsPage() {
   // Load product & related products
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
-    serviceDb.getProducts().then((allProducts) => {
-      const match = allProducts.find(p => p.slug === slug);
+    Promise.all([
+      serviceDb.getProducts(),
+      serviceDb.getReviews()
+    ]).then(([allProducts, allReviews]) => {
+      const decodedSlug = decodeURIComponent(slug);
+      const querySlug = normalizeSlug(decodedSlug);
+      const match = allProducts.find(p => normalizeSlug(p.slug) === querySlug);
       if (match) {
         setProduct(match);
         // Find 4 related items (same category, excluding current)
@@ -49,12 +57,31 @@ export default function ProductDetailsPage() {
           .filter(p => p.category === match.category && p.id !== match.id)
           .slice(0, 4);
         setRelatedProducts(rel);
+        
+        // Filter all reviews for this product, sorted by newest
+        const productReviews = allReviews
+          .filter(r => r.productId === match.id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setApprovedReviews(productReviews);
+        
+        setRelatedProducts(rel);
         setLoading(false);
       } else {
         setLoading(false);
       }
     });
   }, [slug]);
+
+  useEffect(() => {
+    if (user && approvedReviews.length > 0) {
+      const existing = approvedReviews.find(r => r.userId === user.uid);
+      if (existing && !hasExistingReview) {
+        setHasExistingReview(true);
+        setReviewRating(existing.rating);
+        setReviewComment(existing.comment);
+      }
+    }
+  }, [user, approvedReviews, hasExistingReview]);
 
   if (loading) {
     return (
@@ -145,9 +172,12 @@ export default function ProductDetailsPage() {
     setSubmittingReview(true);
     try {
       await addReview(product.id, reviewRating, reviewComment, reviewPhoto);
-      setReviewComment('');
-      setReviewRating(5);
-      setReviewPhoto(null);
+      // Form isn't cleared if updating, because they can update again
+      if (!hasExistingReview) {
+        setReviewComment('');
+        setReviewRating(5);
+        setReviewPhoto(null);
+      }
     } catch {
       triggerToast("Review submission failed.", "error");
     } finally {
@@ -177,8 +207,7 @@ export default function ProductDetailsPage() {
   };
 
   // Filter approved product reviews
-  const approvedReviews = dbSimulator.getReviews()
-    .filter(r => r.productId === product.id && r.approved);
+  // Reviews are now loaded from Firestore in useEffect above
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body">
@@ -197,10 +226,11 @@ export default function ProductDetailsPage() {
             className="relative aspect-square rounded-2xl overflow-hidden border border-[#EDE6DA] cursor-zoom-in bg-gray-50"
           >
             <Image
-              src={product.images[activeImageIndex] || '/images/logo-burgundy.jpg'}
+              src={(typeof product.images[activeImageIndex] === 'string' ? product.images[activeImageIndex] : product.images[activeImageIndex]?.url) || '/images/logo-burgundy.jpg'}
               alt={product.name}
               fill
               priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
               className="w-full h-full object-cover transition-transform duration-100"
               style={{
                 transform: `scale(${zoomScale})`,
@@ -217,7 +247,7 @@ export default function ProductDetailsPage() {
           {/* Thumbnails row */}
           {product.images.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-1 mt-1">
-              {product.images.map((img, idx) => (
+                  {product.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
@@ -225,7 +255,14 @@ export default function ProductDetailsPage() {
                     activeImageIndex === idx ? 'border-[#D4AF37] scale-95 shadow-md' : 'border-[#EDE6DA] hover:border-gray-300'
                   }`}
                 >
-                  <Image src={img} alt={`${product.name} thumbnail ${idx}`} fill className="object-cover" />
+                    <Image 
+                    src={typeof img === 'string' ? img : img.url} 
+                    alt={`${product.name} thumbnail ${idx}`} 
+                    fill 
+                    loading="lazy"
+                    sizes="100px"
+                    className="object-cover" 
+                  />
                 </button>
               ))}
             </div>
@@ -245,16 +282,32 @@ export default function ProductDetailsPage() {
             
             {/* Quick reviews summary */}
             <div className="flex items-center gap-1.5 mt-2 text-xs">
-              <div className="flex items-center gap-0.5 text-amber-500">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span key={i} className={i < Math.floor(product.rating) ? 'text-sm' : 'text-sm text-gray-300'}>★</span>
-                ))}
-                <span className="font-bold text-gray-700 ml-1">{product.rating}</span>
-              </div>
-              <span className="text-gray-400">|</span>
-              <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
-                {approvedReviews.length} Approved Reviews
-              </span>
+              {product.reviewCount > 0 ? (
+                <>
+                  <div className="flex items-center gap-0.5 text-amber-500">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span key={i} className={i < Math.round(product.rating || 0) ? 'text-sm' : 'text-sm text-gray-300'}>★</span>
+                    ))}
+                    <span className="font-bold text-gray-700 ml-1">{(product.rating || 0).toFixed(1)}</span>
+                  </div>
+                  <span className="text-gray-400">|</span>
+                  <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
+                    {product.reviewCount} Reviews
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-0.5 text-amber-500">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span key={i} className="text-sm text-gray-300">☆</span>
+                    ))}
+                  </div>
+                  <span className="text-gray-400">|</span>
+                  <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
+                    0 Reviews
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
@@ -274,25 +327,40 @@ export default function ProductDetailsPage() {
               </>
             )}
           </div>
+<div className="flex gap-4 mt-4 border-b border-gray-200">
+  {['description', 'specifications', 'reviews', 'faq'].map((tab) => (
+    <button
+      key={tab}
+      onClick={() => setActiveTab(tab as 'description' | 'specifications' | 'reviews' | 'faq')}
+      className={`px-3 py-1 text-sm ${activeTab === tab ? 'border-b-2 border-[#D4AF37] text-[#D4AF37]' : 'text-gray-500'}`}
+    >
+      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+    </button>
+  ))}
+</div>
 
-          {/* Short Description */}
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-            {product.description}
-          </p>
+{activeTab === 'description' && (
+  <div className="mt-4">
+    {/* Short Description */}
+    <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+      {product.description}
+    </p>
 
-          {/* Key materials and Wear styles */}
-          <div className="grid grid-cols-2 gap-4 text-xs bg-[#F8F5F0] border border-[#EDE6DA] p-4 rounded-2xl">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-gray-400">Perfect For:</span>
-              <span className="font-semibold capitalize text-[#4B352A]">{product.wearType} Wear</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-gray-400">Stock Availability:</span>
-              <span className={`font-semibold ${product.stock <= 5 ? 'text-amber-600 font-bold' : 'text-emerald-700'}`}>
-                {product.stock <= 0 ? 'Out of Stock' : product.stock <= 5 ? `Low Stock (${product.stock} left)` : 'In Stock'}
-              </span>
-            </div>
-          </div>
+    {/* Key materials and Wear styles */}
+    <div className="grid grid-cols-2 gap-4 text-xs bg-[#F8F5F0] border border-[#EDE6DA] p-4 rounded-2xl">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] uppercase tracking-wider text-gray-400">Perfect For:</span>
+        <span className="font-semibold capitalize text-[#4B352A]">{product.wearType} Wear</span>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[10px] uppercase tracking-wider text-gray-400">Stock Availability:</span>
+        <span className={`font-semibold ${product.stock <= 5 ? 'text-amber-600 font-bold' : 'text-emerald-700'}`}>
+          {product.stock <= 0 ? 'Out of Stock' : product.stock <= 5 ? `Low Stock (${product.stock} left)` : 'In Stock'}
+        </span>
+      </div>
+    </div>
+  </div>
+)}
 
           {/* QUANTITY SELECTOR */}
           {product.stock > 0 && (
@@ -425,72 +493,56 @@ export default function ProductDetailsPage() {
       </div>
 
       {/* ----------------------------------------------------
-          BOTTOM: TABBED INFORMATION SECTION (REVIEWS / DETAILS)
+          BOTTOM: INFORMATION SECTION & REVIEWS
           ---------------------------------------------------- */}
       <div className="mt-16 bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-10 shadow-sm">
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-[#EDE6DA] mb-8">
-          {['details', 'reviews'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`py-3.5 px-6 font-serif font-semibold text-sm uppercase tracking-widest border-b-2 transition-all capitalize -mb-[2px] ${
-                activeTab === tab
-                  ? 'border-[#D4AF37] text-[#1A1A1A]'
-                  : 'border-transparent text-gray-400 hover:text-black'
-              }`}
-            >
-              {tab === 'details' ? 'Product Details' : `Reviews (${approvedReviews.length})`}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab 1: Detailed Specifications */}
-        {activeTab === 'details' && (
-          <div className="flex flex-col gap-6 text-[#1A1A1A]">
-            <div className="prose max-w-none text-xs sm:text-sm text-gray-600 leading-relaxed">
-              <h3 className="text-md font-serif font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
-                Materials & Care Instruction
-              </h3>
+        <div className="flex flex-col gap-6 text-[#1A1A1A]">
+          <div className="prose max-w-none text-xs sm:text-sm text-gray-600 leading-relaxed">
+            <h3 className="text-md font-serif font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+              Materials & Care Instruction
+            </h3>
               <p>
-                Each jewellery article cast at KAELORA is double-plated in tarnish-free champagne gold or rose gold alloy and hypoallergenic steel cores. To extend the lifetime glow of your articles:
+                Each KAELORA piece is crafted to complement both everyday and special occasion styling. To help maintain its appearance and finish:
               </p>
               <ul className="list-disc pl-5 mt-2 flex flex-col gap-1.5">
-                <li>Avoid prolonged direct exposure to concentrated alcohol sprays or harsh detergents.</li>
-                <li>Store within our complimentary soft velvet travel pouches when not in wear.</li>
-                <li>Clean with the dry micro-fiber polishing cloth shipped inside your parcel box.</li>
+                <li>Avoid prolonged exposure to water, perfumes, deodorants, and harsh chemicals.</li>
+                <li>Store in a clean, dry place when not in use.</li>
+                <li>Wipe gently with a soft cloth after use to remove dust and moisture.</li>
+                <li>Handle with care and avoid dropping or applying excessive pressure.</li>
+                <li>Keep away from excessive heat and humidity to preserve its appearance over time.</li>
               </ul>
             </div>
 
-            <div className="w-full border-t border-[#EDE6DA] pt-6 mt-4">
-              <h3 className="text-md font-serif font-bold uppercase tracking-wider mb-4">Product Specifications</h3>
-              <table className="w-full text-xs text-left text-gray-600 border border-gray-100">
-                <tbody>
-                  <tr className="border-b border-gray-50 bg-gray-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Collection Category</td>
-                    <td className="px-4 py-3 capitalize">{product.category}</td>
-                  </tr>
+{activeTab === 'specifications' && (
+  <div className="w-full border-t border-[#EDE6DA] pt-6 mt-4">
+    <h3 className="text-md font-serif font-bold uppercase tracking-wider mb-4">Product Specifications</h3>
+    <table className="w-full text-xs text-left text-gray-600 border border-gray-100">
+      <tbody>
+        <tr className="border-b border-gray-50 bg-gray-50/50">
+          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Material</td>
+          <td className="px-4 py-3">{product.material || '-'}</td>
+        </tr>
+        <tr className="border-b border-gray-50">
+          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Style</td>
+          <td className="px-4 py-3">{product.style || '-'}</td>
+        </tr>
+        <tr className="border-b border-gray-50 bg-gray-50/50">
+          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Occasion</td>
+          <td className="px-4 py-3">{product.occasion || '-'}</td>
+        </tr>
                   <tr className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Optimal Wear Style</td>
-                    <td className="px-4 py-3 capitalize">{product.wearType} Wear</td>
-                  </tr>
-                  <tr className="border-b border-gray-50 bg-gray-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Metal Plating</td>
-                    <td className="px-4 py-3">18k Champagne Double Gold Plated</td>
-                  </tr>
-                  <tr className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Setting Accents</td>
-                    <td className="px-4 py-3">AAA+ Cubic Zirconia crystals / Shell pearl stations</td>
+                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Weight</td>
+                    <td className="px-4 py-3">{product.weight || '-'}</td>
                   </tr>
                   <tr className="bg-gray-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Weight Profile</td>
-                    <td className="px-4 py-3">Lightweight & Hypoallergenic</td>
+                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Availability</td>
+                    <td className="px-4 py-3">{product.availability || '-'}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          ) }
+        
 
         {/* Tab 2: Reviews moderated panels */}
         {activeTab === 'reviews' && (
@@ -614,7 +666,7 @@ export default function ProductDetailsPage() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <>
-                        <span>Submit Review</span>
+                        <span>{hasExistingReview ? 'Update Review' : 'Submit Review'}</span>
                         <ChevronRight className="w-4 h-4" />
                       </>
                     )}
@@ -637,6 +689,7 @@ export default function ProductDetailsPage() {
           </div>
         )}
       </div>
+    </div>
 
       {/* ----------------------------------------------------
           RELATED PRODUCTS SPLIT

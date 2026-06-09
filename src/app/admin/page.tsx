@@ -1,820 +1,522 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { useApp } from '../../context/AppContext';
-import { serviceDb, Product, Order, Review, dbSimulator } from '../../lib/firebase';
-import { useRouter } from 'next/navigation';
-import { Plus, Pencil, Trash, Check, X, ShieldAlert, Award, Package, ShoppingBag, MessageSquare, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { collection, getFirestore, onSnapshot } from 'firebase/firestore';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+};
+
+function getClientDb() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    return getFirestore(app);
+  } catch (error) {
+    console.error('[Admin Dashboard] Firebase init failed:', error);
+    return null;
+  }
+}
+
+function safeDate(value: any) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'object' && 'seconds' in value) {
+    return new Date(value.seconds * 1000);
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  try {
+    return new Date(value);
+  } catch {
+    return null;
+  }
+}
+
+function formatLabel(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function normalizeOrderItems(order: any) {
+  const items: any[] = Array.isArray(order.products)
+    ? order.products
+    : Array.isArray(order.items)
+    ? order.items
+    : [];
+
+  return items.map((item: any) => ({
+    id: item.productId || item.id || item.sku || 'unknown',
+    name: item.name || item.title || item.productName || 'Unnamed product',
+    quantity: Number(item.quantity || item.qty || item.count || 0),
+    price: Number(item.price || item.unitPrice || item.totalPrice || 0),
+  }));
+}
+
+function getLocationLabel(order: any) {
+  const address = order.shippingAddress || order.address || {};
+  return (
+    address.city || address.state || address.region || address.country || address.postalCode || 'Unknown Location'
+  );
+}
+
+function formatCurrency(value: number) {
+  return `₹${value.toLocaleString('en-IN')}`;
+}
 
 export default function AdminDashboardPage() {
-  const { user, settings, adminUpdateSettings, adminAddProduct, adminEditProduct, adminDeleteProduct, triggerToast, setAuthModalOpen } = useApp();
-  const router = useRouter();
-
-  // Admin access gatekeeper check
-  useEffect(() => {
-    if (user && !user.isAdmin) {
-      triggerToast("Access restricted: Administrators only.", "error");
-      router.push('/account');
-    }
-  }, [user, router, triggerToast]);
-
-  // Tab controllers
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'reviews' | 'settings'>('products');
-
-  // Dynamic lists from DB simulator
-  const [products, setProducts] = useState<Product[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-
-  // Statistics counters
-  const [stats, setStats] = useState({
-    products: 0,
-    orders: 0,
-    reviews: 0,
-    sales: 0
-  });
-
-  // Modal open/close frames
-  const [productModalOpen, setProductModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  // Configuration forms
-  const [shipLimit, setShipLimit] = useState(settings.freeShippingLimit);
-  const [shipFee, setShipFee] = useState(settings.standardShippingCharge);
-  const [codFee, setCodFee] = useState(settings.codFee);
-  const [giftGoal, setGiftGoal] = useState(settings.giftGoal);
-
-  // New Product inputs
-  const [pName, setPName] = useState('');
-  const [pPrice, setPPrice] = useState(1200);
-  const [pDiscPrice, setPDiscPrice] = useState(999);
-  const [pCategory, setPCategory] = useState('earrings');
-  const [pWearType, setPWearType] = useState('daily');
-  const [pStock, setPStock] = useState(15);
-  const [pDesc, setPDesc] = useState('');
-  const [pFeatured, setPFeatured] = useState(false);
-  const [pBestSeller, setPBestSeller] = useState(false);
-
-  // Sync settings when loaded
-  useEffect(() => {
-    setShipLimit(settings.freeShippingLimit);
-    setShipFee(settings.standardShippingCharge);
-    setCodFee(settings.codFee);
-    setGiftGoal(settings.giftGoal);
-  }, [settings]);
-
-  // Refresh lists
-  const loadDatabaseRecords = () => {
-    serviceDb.getProducts().then((p) => {
-      setProducts(p);
-      setStats(prev => ({ ...prev, products: p.length }));
-    });
-
-    // fetch all orders simulation (pass undefined to get all)
-    serviceDb.getOrders().then((o) => {
-      setOrders(o);
-      const totalSales = o.reduce((acc, order) => acc + order.totalAmount, 0);
-      setStats(prev => ({ ...prev, orders: o.length, sales: totalSales }));
-    });
-
-    // fetch reviews direct
-    const revs = dbSimulator.getReviews();
-    setReviews(revs);
-    setStats(prev => ({ ...prev, reviews: revs.length }));
-  };
+  const [products, setProducts] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    loadDatabaseRecords();
+    const db = getClientDb();
+    if (!db) return;
+
+    const productsUnsub = onSnapshot(
+      collection(db, 'products'),
+      (snapshot) => {
+        setProducts(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error('[Admin Dashboard] products listener error:', error)
+    );
+
+    const ordersUnsub = onSnapshot(
+      collection(db, 'orders'),
+      (snapshot) => {
+        setOrders(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error('[Admin Dashboard] orders listener error:', error)
+    );
+
+    const usersUnsub = onSnapshot(
+      collection(db, 'users'),
+      (snapshot) => {
+        setUsers(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error('[Admin Dashboard] users listener error:', error)
+    );
+
+    const reviewsUnsub = onSnapshot(
+      collection(db, 'reviews'),
+      (snapshot) => {
+        setReviews(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => console.error('[Admin Dashboard] reviews listener error:', error)
+    );
+
+    return () => {
+      productsUnsub();
+      ordersUnsub();
+      usersUnsub();
+      reviewsUnsub();
+    };
   }, []);
 
-  /* ----------------------------------------------------
-      ADMIN BYPASS RESTRICTION GATES
-      ---------------------------------------------------- */
-  if (!user || !user.isAdmin) {
-    return (
-      <div className="max-w-md mx-auto px-6 py-24 font-body text-center">
-        <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-6">
-          <ShieldAlert className="w-7 h-7 text-red-500" />
-        </div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-red-500 font-bold">Admin Portal Lock</span>
-        <h2 className="text-2xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
-          Restricted Access
-        </h2>
-        <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed mt-3">
-          This portal remains locked under high-grade administrative key vaults. Log in using credential profiles endowed with full admin role parameters.
-        </p>
+  const paidVerifiedOrders = useMemo(() => orders.filter((order) => order.paymentStatus === "paid" && order.paymentVerified === true), [orders]);
+  const totals = useMemo(
+    () => ({
+      totalProducts: products.length,
+      totalOrders: paidVerifiedOrders.length,
+      totalUsers: users.length,
+      totalRevenue: paidVerifiedOrders.reduce((sum, order) => {
+        const amount = Number(order.totalAmount || order.totalPrice || order.amount || 0);
+        return sum + (Number.isNaN(amount) ? 0 : amount);
+      }, 0),
+    }),
+    [products, orders, paidVerifiedOrders]
+  );
+  // Validation logs
+  console.log("Paid Orders:", paidVerifiedOrders.length);
+  console.log("Revenue Calculated:", totals.totalRevenue);
 
-        <button
-          onClick={() => setAuthModalOpen(true)}
-          className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
-        >
-          Sign In to Admin Profile
-        </button>
-      </div>
-    );
-  }
+  const analyticsWindow = 30;
 
-  // Handle Product CRUD
-  const handleProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pName.trim() || !pDesc.trim()) {
-      triggerToast("Name and Description must not be blank.", "error");
-      return;
+  const chartData = useMemo(() => {
+    const buckets: Record<string, { date: string; revenue: number; orders: number }> = {};
+    for (let i = analyticsWindow - 1; i >= 0; i -= 1) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      const key = date.toISOString().slice(0, 10);
+      buckets[key] = { date: formatLabel(date), revenue: 0, orders: 0 };
     }
 
-    try {
-      if (editingProduct) {
-        // Update product
-        const updated: Product = {
-          ...editingProduct,
-          name: pName,
-          price: pPrice,
-          discountPrice: pDiscPrice,
-          category: pCategory as 'earrings' | 'chains' | 'bangles',
-          wearType: pWearType as 'daily' | 'casual' | 'party' | 'traditional' | 'festive',
-          stock: pStock,
-          description: pDesc,
-          featured: pFeatured,
-          bestSeller: pBestSeller
-        };
-        await adminEditProduct(updated.id, updated);
-        triggerToast("Product details updated successfully.", "success");
-      } else {
-        // Add product
-        const newP: Omit<Product, 'id'> = {
-          slug: pName.toLowerCase().replace(/\s+/g, '-'),
-          name: pName,
-          price: pPrice,
-          discountPrice: pDiscPrice,
-          category: pCategory as 'earrings' | 'chains' | 'bangles',
-          wearType: pWearType as 'daily' | 'casual' | 'party' | 'traditional' | 'festive',
-          stock: pStock,
-          description: pDesc,
-          featured: pFeatured,
-          bestSeller: pBestSeller,
-          rating: 0,
-          reviewCount: 0,
-          images: pCategory === 'earrings' ? ['/images/logo-burgundy.jpg'] : ['/images/logo-burgundy.jpg'],
-          createdAt: new Date().toISOString()
-        };
-        await adminAddProduct(newP);
-        triggerToast("New article appended to registry successfully.", "success");
-      }
-
-      setProductModalOpen(false);
-      clearProductForm();
-      loadDatabaseRecords();
-    } catch {
-      triggerToast("Registry modification failed.", "error");
-    }
-  };
-
-  const clearProductForm = () => {
-    setEditingProduct(null);
-    setPName('');
-    setPPrice(1200);
-    setPDiscPrice(999);
-    setPCategory('earrings');
-    setPWearType('daily');
-    setPStock(15);
-    setPDesc('');
-    setPFeatured(false);
-    setPBestSeller(false);
-  };
-
-  const startEditProduct = (prod: Product) => {
-    setEditingProduct(prod);
-    setPName(prod.name);
-    setPPrice(prod.price);
-    setPDiscPrice(prod.discountPrice);
-    setPCategory(prod.category);
-    setPWearType(prod.wearType);
-    setPStock(prod.stock);
-    setPDesc(prod.description);
-    setPFeatured(prod.featured);
-    setPBestSeller(prod.bestSeller);
-    setProductModalOpen(true);
-  };
-
-  const handleDeleteProduct = async (id: string) => {
-    if (confirm("Are you confident you want to delete this article registry profile?")) {
-      try {
-        await adminDeleteProduct(id);
-        triggerToast("Product successfully purged from registry.", "success");
-        loadDatabaseRecords();
-      } catch {
-        triggerToast("Purge failed.", "error");
-      }
-    }
-  };
-
-  // Orders Dispatch Status update
-  const handleUpdateOrderStatus = async (orderId: string, nextStatus: 'processing' | 'shipped' | 'delivered') => {
-    try {
-      await serviceDb.updateOrderStatus(orderId, nextStatus);
-      triggerToast(`Order status updated to "${nextStatus}"`, "success");
-      loadDatabaseRecords();
-    } catch {
-      triggerToast("Status update failed.", "error");
-    }
-  };
-
-  // Review approval moderation
-  const handleApproveReview = (reviewId: string) => {
-    serviceDb.approveReview(reviewId);
-    triggerToast("Review published to public listings page.", "success");
-    loadDatabaseRecords();
-  };
-
-  const handleDeleteReview = (reviewId: string) => {
-    if (confirm("Delete this user review comments?")) {
-      serviceDb.rejectOrDeleteReview(reviewId);
-      triggerToast("Review successfully removed.", "success");
-      loadDatabaseRecords();
-    }
-  };
-
-  // Platform configs update
-  const handleSettingsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    adminUpdateSettings({
-      freeShippingLimit: shipLimit,
-      standardShippingCharge: shipFee,
-      codFee,
-      giftGoal
+    orders.forEach((order) => {
+      if (!(order.paymentStatus === "paid" && order.paymentVerified === true)) return;
+      const date = safeDate(order.createdAt || order.date || order.created_at);
+      if (!date) return;
+      const key = new Date(date).toISOString().slice(0, 10);
+      if (!buckets[key]) return;
+      const amount = Number(order.totalAmount || order.totalPrice || order.amount || 0);
+      buckets[key].revenue += Number.isNaN(amount) ? 0 : amount;
+      buckets[key].orders += 1;
     });
-    triggerToast("✨ Platform configuration saved successfully.", "success");
-  };
+
+    return Object.values(buckets);
+  }, [orders]);
+
+  const revenueHasData = chartData.some((row) => row.revenue > 0);
+  const ordersHasData = chartData.some((row) => row.orders > 0);
+
+  const topProducts = useMemo(() => {
+    const counts: Record<string, { name: string; quantity: number; revenue: number }> = {};
+
+    orders.forEach((order) => {
+      normalizeOrderItems(order).forEach((item) => {
+        const key = item.id || item.name;
+        if (!counts[key]) {
+          counts[key] = { name: item.name, quantity: 0, revenue: 0 };
+        }
+        counts[key].quantity += item.quantity;
+        // Only count revenue for paid & verified orders
+        if (order.paymentStatus === "paid" && order.paymentVerified === true) {
+          counts[key].revenue += item.quantity * item.price;
+        }
+      });
+    });
+
+    return Object.entries(counts)
+      .map(([id, item]) => ({ id, ...item }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
+  }, [orders]);
+
+  const locationData = useMemo(() => {
+    const counts: Record<string, { location: string; orders: number; revenue: number }> = {};
+
+    orders.forEach((order) => {
+      const location = getLocationLabel(order);
+      if (!counts[location]) counts[location] = { location, orders: 0, revenue: 0 };
+      counts[location].orders += 1;
+      // Only add revenue for paid & verified orders
+      if (order.paymentStatus === "paid" && order.paymentVerified === true) {
+        const amount = Number(order.totalAmount || order.totalPrice || order.amount || 0);
+        counts[location].revenue += Number.isNaN(amount) ? 0 : amount;
+      }
+    });
+
+    return Object.values(counts).sort((a, b) => b.orders - a.orders).slice(0, 6);
+  }, [orders]);
+
+  const categoryData = useMemo(() => {
+    const counts: Record<string, number> = {
+      Earrings: 0,
+      Chains: 0,
+      Bangles: 0,
+      Other: 0,
+    };
+
+    products.forEach((product) => {
+      const category = String(product.category || product.type || '').toLowerCase();
+      if (category.includes('earring')) counts.Earrings += 1;
+      else if (category.includes('chain')) counts.Chains += 1;
+      else if (category.includes('bangle')) counts.Bangles += 1;
+      else counts.Other += 1;
+    });
+
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [products]);
+
+  const recentOrders = useMemo(
+    () =>
+      paidVerifiedOrders
+        .slice()
+        .sort((a, b) => {
+          const aDate = safeDate(a.createdAt || a.date || a.created_at);
+          const bDate = safeDate(b.createdAt || b.date || b.created_at);
+          return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+        })
+        .slice(0, 10),
+    [paidVerifiedOrders]
+  );
+
+  const recentReviews = useMemo(
+    () =>
+      reviews
+        .slice()
+        .sort((a, b) => {
+          const aDate = safeDate(a.createdAt || a.date || a.created_at);
+          const bDate = safeDate(b.createdAt || b.date || b.created_at);
+          return (bDate?.getTime() || 0) - (aDate?.getTime() || 0);
+        })
+        .slice(0, 8),
+    [reviews]
+  );
+
+  const locationHasData = locationData.length > 0;
+  const categoryHasData = categoryData.some((item) => item.value > 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body text-[#1A1A1A]">
-      
-      {/* Title */}
-      <div className="text-center mb-10">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Administrative Access</span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
-          Admin Dashboard
-        </h1>
-        <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 font-body text-[#1A1A1A]">
+      <div className="mb-8">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Administrative Access</div>
+        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-3 tracking-wider">Admin Dashboard</h1>
+        <p className="mt-2 max-w-2xl text-sm text-gray-600">Live store performance, order trends, product momentum, and review activity from Firestore.</p>
       </div>
 
-      {/* ----------------------------------------------------
-          STATISTICS COUNTERS HIGHLIGHT
-          ---------------------------------------------------- */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
-        <div className="bg-white border border-[#EDE6DA] rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#EDE6DA]/30 text-[#D4AF37] flex items-center justify-center flex-shrink-0">
-            <ShoppingBag className="w-5 h-5" />
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 mb-6">
+        {[
+          { label: 'Total Products', value: totals.totalProducts },
+          { label: 'Total Orders', value: totals.totalOrders },
+          { label: 'Total Users', value: totals.totalUsers },
+          { label: 'Total Revenue', value: formatCurrency(totals.totalRevenue) },
+        ].map((card) => (
+          <div key={card.label} className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)] transition hover:shadow-[0_30px_75px_rgba(16,24,40,0.08)]">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-semibold">{card.label}</div>
+            <div className="mt-5 text-3xl font-serif font-bold text-[#1A1A1A]">{card.value}</div>
           </div>
-          <div>
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-bold">Total Articles</span>
-            <h4 className="text-lg font-serif font-bold mt-0.5">{stats.products}</h4>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[1.8fr_1.2fr] gap-5 mb-6">
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Revenue Analytics</div>
+              <div className="mt-2 text-lg font-semibold text-[#111827]">30-day revenue trend</div>
+            </div>
+            <div className="rounded-2xl bg-[#F8F4EA] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">Live</div>
           </div>
+          {revenueHasData ? (
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, bottom: 0, left: -10, right: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#EAE4DA" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} width={40} />
+                  <Tooltip contentStyle={{ borderRadius: 16, borderColor: '#E6DDD0' }} formatter={(value: any) => formatCurrency(Number(value || 0))} />
+                  <Area type="monotone" dataKey="revenue" stroke="#D4AF37" strokeWidth={3} fill="url(#revenueGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#FEFBF7] text-center text-sm text-gray-500">
+              No revenue data available yet.
+            </div>
+          )}
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#EDE6DA]/30 text-[#D4AF37] flex items-center justify-center flex-shrink-0">
-            <Package className="w-5 h-5" />
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="mb-5">
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Orders Analytics</div>
+            <div className="mt-2 text-lg font-semibold text-[#111827]">Daily order volume</div>
           </div>
-          <div>
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-bold">Total Orders</span>
-            <h4 className="text-lg font-serif font-bold mt-0.5">{stats.orders}</h4>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#EDE6DA] rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-[#EDE6DA]/30 text-[#D4AF37] flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-bold">Reviews Received</span>
-            <h4 className="text-lg font-serif font-bold mt-0.5">{stats.reviews}</h4>
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#EDE6DA] rounded-2xl p-5 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-            <Award className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider block font-bold">Simulated Sales</span>
-            <h4 className="text-lg font-serif font-bold mt-0.5 text-emerald-700">₹{stats.sales.toLocaleString('en-IN')}</h4>
-          </div>
+          {ordersHasData ? (
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 0, left: -14, bottom: 0 }}>
+                  <CartesianGrid stroke="#EAE4DA" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} width={40} />
+                  <Tooltip contentStyle={{ borderRadius: 16, borderColor: '#E6DDD0' }} formatter={(value: any) => `${Number(value || 0)} orders`} />
+                  <Bar dataKey="orders" fill="#1F2937" radius={[10, 10, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#F8FAFC] text-center text-sm text-gray-500">
+              No order analytics available yet.
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tabs Menu bar & Refresh Trigger */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-[#EDE6DA] mb-8 gap-4">
-        <div className="flex overflow-x-auto pb-1 flex-nowrap gap-1">
-          {['products', 'orders', 'reviews', 'settings'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`py-3 px-5 font-serif font-semibold text-xs uppercase tracking-widest border-b-2 transition-all capitalize -mb-[2px] whitespace-nowrap ${
-                activeTab === tab
-                  ? 'border-[#D4AF37] text-[#1A1A1A]'
-                  : 'border-transparent text-gray-400 hover:text-black'
-              }`}
-            >
-              {tab === 'products' ? 'Product Registry' : tab === 'orders' ? 'Orders dispatch' : tab === 'reviews' ? 'Review Moderation' : 'Platform config'}
-            </button>
-          ))}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Top Selling Products</div>
+              <div className="mt-2 text-lg font-semibold text-[#111827]">Generated from order history</div>
+            </div>
+          </div>
+          {topProducts.length === 0 ? (
+            <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#FEFBF7] text-center text-sm text-gray-500">
+              No top selling products available yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {topProducts.map((item, index) => (
+                <div key={item.id} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#111827]">{item.name}</div>
+                      <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Sold quantity</div>
+                    </div>
+                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">#{index + 1}</div>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
+                    <span>{item.quantity} units</span>
+                    <span>{formatCurrency(item.revenue)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={loadDatabaseRecords}
-          className="self-start sm:self-auto px-4 py-2 border border-[#EDE6DA] rounded-xl hover:bg-gray-50 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span>Refresh Database</span>
-        </button>
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Sales By Location</div>
+              <div className="mt-2 text-lg font-semibold text-[#111827]">Order volume by shipping region</div>
+            </div>
+          </div>
+          {locationHasData ? (
+            <div className="space-y-3">
+              {locationData.map((location) => (
+                <div key={location.location} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-semibold text-[#111827]">{location.location}</div>
+                      <div className="text-xs text-gray-500">{location.orders} orders</div>
+                    </div>
+                    <div className="text-sm font-semibold text-[#1F2937]">{formatCurrency(location.revenue)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex min-h-[260px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#F8FAFC] text-center text-sm text-gray-500">
+              No location sales data available yet.
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ----------------------------------------------------
-          TAB 1: PRODUCT REGISTRY & CRUD CONTROLS
-          ---------------------------------------------------- */}
-      {activeTab === 'products' && (
-        <div className="flex flex-col gap-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-base font-serif font-semibold uppercase tracking-widest">
-              Showcase Registry Management
-            </h3>
-            <button
-              onClick={() => {
-                clearProductForm();
-                setProductModalOpen(true);
-              }}
-              className="px-4 py-2.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Jewellery</span>
-            </button>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Category Distribution</div>
+              <div className="mt-2 text-lg font-semibold text-[#111827]">Products by category</div>
+            </div>
           </div>
+          {categoryHasData ? (
+            <div className="h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={110} innerRadius={60} paddingAngle={4}>
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`slice-${entry.name}`} fill={['#D4AF37', '#1F2937', '#A78BFA', '#E5E7EB'][index % 4]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: any) => `${Number(value || 0)} products`} />
+                  <Legend verticalAlign="bottom" height={40} iconSize={8} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#FEFBF7] text-center text-sm text-gray-500">
+              No category distribution data available yet.
+            </div>
+          )}
+        </div>
 
-          {/* Table of products */}
-          <div className="overflow-x-auto rounded-2xl border border-[#EDE6DA] shadow-sm">
-            <table className="w-full text-xs text-left text-gray-600">
-              <thead className="bg-gray-50 uppercase text-[9px] tracking-wider text-gray-500 border-b border-[#EDE6DA]">
+        <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+          <div className="mb-5">
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Recent Reviews</div>
+            <div className="mt-2 text-lg font-semibold text-[#111827]">Latest customer impressions</div>
+          </div>
+          {recentReviews.length === 0 ? (
+            <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#F8FAFC] text-center text-sm text-gray-500">
+              No review activity available yet.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentReviews.map((review) => (
+                <div key={review.id} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[#111827]">{review.userName || review.userId || 'Anonymous'}</div>
+                      <div className="text-xs text-gray-500">Product: {review.productId || 'Unknown'}</div>
+                    </div>
+                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">{review.rating || '—'} ★</div>
+                  </div>
+                  <p className="mt-3 text-sm text-gray-600 line-clamp-3">{review.comment || 'No comment provided.'}</p>
+                  <div className="mt-4 text-xs text-gray-400">{(safeDate(review.createdAt || review.date || review.created_at) || new Date()).toLocaleDateString()}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Recent Orders</div>
+            <div className="mt-2 text-lg font-semibold text-[#111827]">Latest orders from Firestore</div>
+          </div>
+          <button className="rounded-full bg-[#F3E7C9] px-4 py-2 text-xs font-semibold text-[#7C5F2C] hover:bg-[#E7D69A] transition">
+            View all orders
+          </button>
+        </div>
+        {recentOrders.length === 0 ? (
+          <div className="flex min-h-[220px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#FEFBF7] text-center text-sm text-gray-500">
+            No successful orders yet.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm text-gray-600">
+              <thead className="border-b border-gray-200 text-xs uppercase tracking-[0.25em] text-gray-500">
                 <tr>
-                  <th className="px-6 py-4">Article</th>
-                  <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Price / Discount</th>
-                  <th className="px-6 py-4">Stock</th>
-                  <th className="px-6 py-4 text-center">Tags</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-4 py-3">Order</th>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Amount</th>
+                  <th className="px-4 py-3">Location</th>
+                  <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 bg-white font-body">
-                {products.map((prod) => (
-                  <tr key={prod.id} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4 flex items-center gap-3">
-                      <Image 
-                        src={prod.images[0]} 
-                        alt={prod.name} 
-                        width={40} 
-                        height={40} 
-                        className="w-10 h-10 rounded-lg object-cover border border-gray-100" 
-                      />
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-[#1A1A1A] truncate">{prod.name}</h4>
-                        <span className="text-[10px] text-gray-400 font-mono truncate block">ID: {prod.id}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 capitalize font-semibold">{prod.category}</td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-[#1A1A1A]">₹{prod.discountPrice}</span>{' '}
-                      <span className="text-gray-400 line-through text-[10px]">₹{prod.price}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-semibold ${prod.stock <= 5 ? 'text-amber-600 font-bold' : 'text-emerald-700'}`}>
-                        {prod.stock} Units
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {recentOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-4 font-mono text-[#111827]">{order.id}</td>
+                    <td className="px-4 py-4 text-gray-700">{order.shippingAddress?.fullName || order.userId || 'Guest'}</td>
+                    <td className="px-4 py-4 text-gray-700">{formatCurrency(Number(order.totalAmount || order.totalPrice || order.amount || 0))}</td>
+                    <td className="px-4 py-4 text-gray-700">{getLocationLabel(order)}</td>
+                    <td className="px-4 py-4">
+                      <span className="inline-flex rounded-full bg-[#F8F4EA] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7C5F2C]">
+                        {order.status || order.orderStatus || 'Pending'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {prod.featured && <span className="bg-[#EDE6DA] text-[#4B352A] text-[8px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full">Featured</span>}
-                        {prod.bestSeller && <span className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 text-[8px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full">Bestseller</span>}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => startEditProduct(prod)}
-                          className="p-2 border border-[#EDE6DA] rounded-lg hover:bg-gray-50 text-gray-600 hover:text-black transition-colors"
-                          title="Edit Details"
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(prod.id)}
-                          className="p-2 border border-red-100 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-700 transition-colors"
-                          title="Purge Article"
-                        >
-                          <Trash className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* ----------------------------------------------------
-          TAB 2: ORDERS MODERATION DISPATCH TRACKER
-          ---------------------------------------------------- */}
-      {activeTab === 'orders' && (
-        <div className="flex flex-col gap-6">
-          <h3 className="text-base font-serif font-semibold uppercase tracking-widest">
-            Dispatch Moderation Dashboard
-          </h3>
-
-          <div className="overflow-x-auto rounded-2xl border border-[#EDE6DA] shadow-sm">
-            <table className="w-full text-xs text-left text-gray-600">
-              <thead className="bg-gray-50 uppercase text-[9px] tracking-wider text-gray-500 border-b border-[#EDE6DA]">
-                <tr>
-                  <th className="px-6 py-4">Order Details</th>
-                  <th className="px-6 py-4">Recipient Info</th>
-                  <th className="px-6 py-4">Total Amount</th>
-                  <th className="px-6 py-4">Status & Dispatch</th>
-                  <th className="px-6 py-4 text-right">Moderations</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white font-body">
-                {orders.map((ord) => {
-                  const statusColors = 
-                    ord.status === 'delivered' ? 'bg-emerald-50 text-emerald-700' :
-                    ord.status === 'shipped' ? 'bg-blue-50 text-blue-700' :
-                    'bg-amber-50 text-amber-700';
-
-                  return (
-                    <tr key={ord.id} className="hover:bg-gray-50/50">
-                      <td className="px-6 py-4">
-                        <span className="font-mono font-bold text-[#1A1A1A]">{ord.id}</span>
-                        <span className="text-[10px] text-gray-400 block mt-0.5">{new Date(ord.createdAt || '').toLocaleDateString('en-IN')}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-[#1A1A1A] block">{ord.shippingAddress.fullName}</span>
-                        <span className="text-gray-400 text-[10px] block mt-0.5">{ord.shippingAddress.city}, PIN: {ord.shippingAddress.pincode}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-bold text-[#1A1A1A]">₹{ord.totalAmount}</span>
-                        <span className="text-[10px] text-gray-400 block mt-0.5 uppercase font-bold">{ord.paymentMethod}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`text-[9px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full border ${statusColors}`}>
-                          {ord.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {ord.status === 'processing' && (
-                            <button
-                              onClick={() => handleUpdateOrderStatus(ord.id, 'shipped')}
-                              className="px-2.5 py-1.5 bg-blue-50 border border-blue-100 hover:bg-blue-100 text-blue-700 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-colors"
-                            >
-                              Dispatch Order
-                            </button>
-                          )}
-                          {ord.status === 'shipped' && (
-                            <button
-                              onClick={() => handleUpdateOrderStatus(ord.id, 'delivered')}
-                              className="px-2.5 py-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 text-[10px] uppercase font-bold tracking-wider rounded-lg transition-colors"
-                            >
-                              Confirm Delivery
-                            </button>
-                          )}
-                          {ord.status === 'delivered' && (
-                            <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-0.5 pr-2">
-                              <Check className="w-3.5 h-3.5" />
-                              <span>Delivered</span>
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ----------------------------------------------------
-          TAB 3: CUSTOMER REVIEW MODERATION CONTROL
-          ---------------------------------------------------- */}
-      {activeTab === 'reviews' && (
-        <div className="flex flex-col gap-6">
-          <h3 className="text-base font-serif font-semibold uppercase tracking-widest">
-            Customer Comments Moderations
-          </h3>
-
-          <div className="overflow-x-auto rounded-2xl border border-[#EDE6DA] shadow-sm">
-            <table className="w-full text-xs text-left text-gray-600">
-              <thead className="bg-gray-50 uppercase text-[9px] tracking-wider text-gray-500 border-b border-[#EDE6DA]">
-                <tr>
-                  <th className="px-6 py-4">Reviewer Details</th>
-                  <th className="px-6 py-4">Ratings & Comments</th>
-                  <th className="px-6 py-4">Attached Asset</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-right">Moderations</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white font-body">
-                {reviews.map((rev) => (
-                  <tr key={rev.id} className="hover:bg-gray-50/50">
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-[#1A1A1A] block">{rev.userName}</span>
-                      <span className="text-[9px] text-gray-400 block mt-0.5">Product ID: {rev.productId}</span>
-                    </td>
-                    <td className="px-6 py-4 max-w-sm">
-                      <div className="flex text-amber-500 text-[10px] mb-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} className={i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-gray-300'}>★</span>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-gray-600 leading-normal line-clamp-2">{rev.comment}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      {rev.image ? (
-                        <Image 
-                          src={rev.image} 
-                          alt="User asset attachment" 
-                          width={40} 
-                          height={40} 
-                          className="w-10 h-10 rounded object-cover border border-gray-100" 
-                        />
-                      ) : (
-                        <span className="text-gray-400 italic text-[10px]">None</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded ${
-                        rev.approved ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {rev.approved ? 'Approved' : 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {!rev.approved && (
-                          <button
-                            onClick={() => handleApproveReview(rev.id)}
-                            className="p-1.5 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 text-emerald-700 rounded-lg transition-colors flex items-center justify-center"
-                            title="Approve Review"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteReview(rev.id)}
-                          className="p-1.5 bg-red-50 border border-red-100 hover:bg-red-100 text-red-500 rounded-lg transition-colors flex items-center justify-center"
-                          title="Purge Review Comments"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* ----------------------------------------------------
-          TAB 4: PLATFORM CONFIGURATOR (SETTINGS)
-          ---------------------------------------------------- */}
-      {activeTab === 'settings' && (
-        <div className="flex flex-col gap-6 max-w-2xl bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-8 shadow-sm">
-          <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
-            Core Pricing & Logistics Configurator
-          </h3>
-
-          <form onSubmit={handleSettingsSubmit} className="flex flex-col gap-4 text-xs font-semibold text-[#4B352A]">
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Free Shipping Threshold *</label>
-                <input
-                  type="number"
-                  required
-                  value={shipLimit}
-                  onChange={(e) => setShipLimit(Number(e.target.value))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Standard Shipping Charge *</label>
-                <input
-                  type="number"
-                  required
-                  value={shipFee}
-                  onChange={(e) => setShipFee(Number(e.target.value))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">COD Handling Fee *</label>
-                <input
-                  type="number"
-                  required
-                  value={codFee}
-                  onChange={(e) => setCodFee(Number(e.target.value))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Complimentary Gift Goal (Count) *</label>
-                <input
-                  type="number"
-                  required
-                  value={giftGoal}
-                  onChange={(e) => setGiftGoal(Number(e.target.value))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="mt-4 w-full py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-md"
-            >
-              Save Configuration Settings
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* ----------------------------------------------------
-          SLIDING PRODUCT CREATION/EDIT MODALDRAWER
-          ---------------------------------------------------- */}
-      {productModalOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div
-            onClick={() => setProductModalOpen(false)}
-            className="absolute inset-0 bg-[#1A1A1A]/40 backdrop-blur-sm"
-          />
-
-          {/* Drawer Panel content */}
-          <div className="relative w-[500px] max-w-full h-full bg-[#F8F5F0] shadow-2xl p-6 flex flex-col z-10 overflow-y-auto">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#EDE6DA] pb-4 mb-5">
-              <h3 className="text-sm font-serif font-bold uppercase tracking-wider">
-                {editingProduct ? 'Modify Article Profile' : 'Add New Jewellery'}
-              </h3>
-              <button
-                onClick={() => setProductModalOpen(false)}
-                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Inputs Form */}
-            <form onSubmit={handleProductSubmit} className="flex flex-col gap-4 text-xs font-semibold text-[#4B352A]">
-              
-              {/* Product Name */}
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Article Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="E.g. Filigree Butterfly Hoop Earrings"
-                  value={pName}
-                  onChange={(e) => setPName(e.target.value)}
-                  className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Description *</label>
-                <textarea
-                  required
-                  placeholder="Description of double plating, crystals setting details, wear profiles..."
-                  value={pDesc}
-                  onChange={(e) => setPDesc(e.target.value)}
-                  rows={3}
-                  className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] resize-y"
-                />
-              </div>
-
-              {/* Price & Discount */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="uppercase tracking-wider">Standard Price *</label>
-                  <input
-                    type="number"
-                    required
-                    value={pPrice}
-                    onChange={(e) => setPPrice(Number(e.target.value))}
-                    className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="uppercase tracking-wider">Discount Price *</label>
-                  <input
-                    type="number"
-                    required
-                    value={pDiscPrice}
-                    onChange={(e) => setPDiscPrice(Number(e.target.value))}
-                    className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                  />
-                </div>
-              </div>
-
-              {/* Category & Wear style */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="uppercase tracking-wider">Collection Category *</label>
-                  <select
-                    value={pCategory}
-                    onChange={(e) => setPCategory(e.target.value)}
-                    className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    <option value="earrings">Earrings</option>
-                    <option value="chains">Gold Chains</option>
-                    <option value="bangles">Bangles</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="uppercase tracking-wider">Optimal Wear Style *</label>
-                  <select
-                    value={pWearType}
-                    onChange={(e) => setPWearType(e.target.value)}
-                    className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                  >
-                    <option value="daily">Daily Wear</option>
-                    <option value="casual">Casual Wear</option>
-                    <option value="party">Party Wear</option>
-                    <option value="traditional">Traditional Wear</option>
-                    <option value="festive">Festive Wear</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Stock units */}
-              <div className="flex flex-col gap-1.5">
-                <label className="uppercase tracking-wider">Available Stock Units *</label>
-                <input
-                  type="number"
-                  required
-                  value={pStock}
-                  onChange={(e) => setPStock(Number(e.target.value))}
-                  className="bg-white border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37]"
-                />
-              </div>
-
-              {/* Badges toggles */}
-              <div className="flex items-center gap-6 mt-1.5">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pFeatured}
-                    onChange={(e) => setPFeatured(e.target.checked)}
-                    className="rounded border-[#EDE6DA] text-[#D4AF37] focus:ring-[#D4AF37] w-4 h-4"
-                  />
-                  <span>Mark as Featured Look</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={pBestSeller}
-                    onChange={(e) => setPBestSeller(e.target.checked)}
-                    className="rounded border-[#EDE6DA] text-[#D4AF37] focus:ring-[#D4AF37] w-4 h-4"
-                  />
-                  <span>Mark as Bestseller</span>
-                </label>
-              </div>
-
-              {/* Submit btn */}
-              <button
-                type="submit"
-                className="mt-6 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-all shadow-md"
-              >
-                {editingProduct ? 'Commit Changes' : 'Append Article'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
+        )}
+      </div>
     </div>
   );
 }

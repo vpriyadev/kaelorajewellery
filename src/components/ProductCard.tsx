@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext';
 import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
 import { Product } from '../lib/firebase';
 import { motion } from 'framer-motion';
+import { normalizeSlug } from '../lib/slugUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -46,13 +47,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </button>
 
       {/* Image Gallery Container (Clickable links to Details) */}
-      <Link href={`/product/${product.slug}`} className="block relative overflow-hidden bg-gray-50 aspect-square">
-        <Image
-          src={product.images[0] || '/images/logo-burgundy.jpg'}
-          alt={product.name}
-          fill
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
+      <Link href={`/product/${normalizeSlug(product.slug)}`} className="block overflow-hidden bg-gray-50">
+        {(() => {
+          const raw = (typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url) as string | undefined;
+          if (!raw || raw.includes('logo-burgundy')) return null;
+          return (
+            <Image
+              src={raw}
+              alt={product.name}
+              width={320}
+              height={380}
+              className="w-full h-[380px] object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+          );
+        })()}
+        {!((typeof product.images[0] === 'string' ? product.images[0] : product.images[0]?.url) ) || (typeof product.images[0] === 'string' && product.images[0].includes('logo-burgundy')) ? (
+          <div className="w-full h-[380px] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">No image available</div>
+        ) : null}
         {/* Quick hover detail overlay */}
         <div className="absolute inset-0 bg-[#1A1A1A]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
           <span className="bg-white/95 backdrop-blur-sm text-xs font-semibold uppercase tracking-widest text-[#1A1A1A] px-4 py-2 rounded-xl shadow-lg border border-[#EDE6DA] flex items-center gap-1.5 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -75,7 +86,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           {/* Title */}
-          <Link href={`/product/${product.slug}`} className="block">
+          <Link href={`/product/${normalizeSlug(product.slug)}`} className="block">
             <h3 className="text-sm font-semibold text-[#1A1A1A] tracking-wide hover:text-[#D4AF37] transition-colors line-clamp-1">
               {product.name}
             </h3>
