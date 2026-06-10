@@ -648,10 +648,21 @@ async function isEmailAdmin(email: string): Promise<boolean> {
         return adminEmails.includes(email.toLowerCase());
       }
     }
-    return false;
+
+    // Firestore document missing or DB not available -> fallback to hardcoded admins
+    const FALLBACK_ADMINS = [
+      'vishnupriyareddy0711@gmail.com',
+      'jashujash1107@gmail.com'
+    ];
+    return FALLBACK_ADMINS.includes(email.toLowerCase());
   } catch (error) {
     console.warn('[Firebase] Error checking admin status:', error);
-    return false;
+    // On error, fall back to hardcoded admin emails
+    const FALLBACK_ADMINS = [
+      'vishnupriyareddy0711@gmail.com',
+      'jashujash1107@gmail.com'
+    ];
+    return FALLBACK_ADMINS.includes(email.toLowerCase());
   }
 }
 
