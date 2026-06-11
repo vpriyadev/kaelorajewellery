@@ -33,50 +33,50 @@ export const Footer: React.FC = () => {
               className="h-10 w-auto object-contain"
             />
             <div className="flex flex-col">
-              <span className="text-md font-bold tracking-[0.16em] uppercase font-serif text-white group-hover:text-[#D4AF37] transition-colors">
+              <span className="font-display font-normal text-xl tracking-[0.2em] uppercase text-white group-hover:text-[#D4AF37] transition-colors">
                 Kaelora
               </span>
-              <span className="text-[8px] tracking-[0.3em] uppercase text-[#D4AF37] -mt-1">
+              <span className="font-body font-normal text-[9px] tracking-[0.4em] uppercase text-[#C9A84C] -mt-1">
                 Jewellery
               </span>
             </div>
             </Link>
-            <p className="text-xs text-gray-400 leading-relaxed max-w-xs mt-2">
+            <p className="font-jakarta font-normal text-sm text-neutral-400 leading-relaxed max-w-xs mt-2">
               Discover beautiful earrings, chains and bangles designed to make every moment special. Elevate your everyday style with our affordable premium collections.
             </p>
-            <p className="text-xs uppercase tracking-[0.2em] font-semibold text-[#D4AF37] mt-1 font-serif">
+            <p className="font-body font-normal text-[9px] tracking-[0.25em] uppercase text-[#C9A84C] mt-1">
               Elegant • Affordable • Beautiful
             </p>
           </div>
 
           {/* COL 2: Shop Category paths */}
           <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-semibold uppercase tracking-widest text-white font-serif border-l-2 border-[#D4AF37] pl-3">
+            <h4 className="font-body font-medium text-xs tracking-[0.2em] uppercase text-white border-l-2 border-[#C9A84C] pl-3">
               Shop Collections
             </h4>
-            <ul className="flex flex-col gap-2.5 text-xs text-gray-400">
+            <ul className="flex flex-col gap-2.5 font-jakarta font-normal text-sm text-neutral-400">
               <li>
-                <Link href="/shop" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/shop" className="hover:text-white transition-colors duration-200">
                   All Collections
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=earrings" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/shop?category=earrings" className="hover:text-white transition-colors duration-200">
                   Earrings Collection
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=chains" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/shop?category=chains" className="hover:text-white transition-colors duration-200">
                   Pendant Chains
                 </Link>
               </li>
               <li>
-                <Link href="/shop?category=bangles" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/shop?category=bangles" className="hover:text-white transition-colors duration-200">
                   Designer Bangles
                 </Link>
               </li>
               <li>
-                <Link href="/shop?featured=true" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/shop?featured=true" className="hover:text-white transition-colors duration-200">
                   Best Sellers
                 </Link>
               </li>
@@ -85,32 +85,32 @@ export const Footer: React.FC = () => {
 
           {/* COL 3: Quick Policies */}
           <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-semibold uppercase tracking-widest text-white font-serif border-l-2 border-[#D4AF37] pl-3">
+            <h4 className="font-body font-medium text-xs tracking-[0.2em] uppercase text-white border-l-2 border-[#C9A84C] pl-3">
               Store Policies
             </h4>
-            <ul className="flex flex-col gap-2.5 text-xs text-gray-400">
+            <ul className="flex flex-col gap-2.5 font-jakarta font-normal text-sm text-neutral-400">
               <li>
-                <button onClick={() => alert("Free Delivery above ₹400 across all India pincodes. Orders are processed within 24 hours.")} className="hover:text-[#D4AF37] text-left transition-colors">
+                <button onClick={() => alert("Free Delivery above ₹400 across all India pincodes. Orders are processed within 24 hours.")} className="hover:text-white text-left transition-colors duration-200">
                   Shipping & Delivery
                 </button>
               </li>
               <li>
-                <button onClick={() => alert("We support returns and exchanges within 7 days of delivery. Jewellery items must be unworn and in original tags.")} className="hover:text-[#D4AF37] text-left transition-colors">
+                <button onClick={() => alert("We support returns and exchanges within 7 days of delivery. Jewellery items must be unworn and in original tags.")} className="hover:text-white text-left transition-colors duration-200">
                   Returns & Exchange
                 </button>
               </li>
               <li>
-                <button onClick={() => alert("Your payments are 100% encrypted. We support Visa, Mastercard, Google Pay and UPI transactions.")} className="hover:text-[#D4AF37] text-left transition-colors">
+                <button onClick={() => alert("Your payments are 100% encrypted. We support Visa, Mastercard, Google Pay and UPI transactions.")} className="hover:text-white text-left transition-colors duration-200">
                   Payment Security
                 </button>
               </li>
               <li>
-                <button onClick={() => alert("We utilize AAA quality cubic zirconia crystals, hypoallergenic surgical steel, and pure 18k gold double-plating.")} className="hover:text-[#D4AF37] text-left transition-colors">
+                <button onClick={() => alert("We utilize AAA quality cubic zirconia crystals, hypoallergenic surgical steel, and pure 18k gold double-plating.")} className="hover:text-white text-left transition-colors duration-200">
                   Product Materials Care
                 </button>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-[#D4AF37] transition-colors">
+                <Link href="/contact" className="hover:text-white transition-colors duration-200">
                   Frequently Asked Questions (FAQ)
                 </Link>
               </li>
@@ -119,10 +119,10 @@ export const Footer: React.FC = () => {
 
           {/* COL 4: Newsletter Subscription */}
           <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-semibold uppercase tracking-widest text-white font-serif border-l-2 border-[#D4AF37] pl-3">
+            <h4 className="font-body font-medium text-xs tracking-[0.2em] uppercase text-white border-l-2 border-[#C9A84C] pl-3">
               Luxury Club
             </h4>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="font-jakarta font-normal text-sm text-neutral-400 leading-relaxed">
               Subscribe to unlock early access, birthday gifts, and custom trend reports.
             </p>
             <form onSubmit={handleSubscribe} className="flex items-center mt-1">
@@ -130,11 +130,11 @@ export const Footer: React.FC = () => {
                 type="email"
                 required
                 placeholder="Your email address"
-                className="flex-grow bg-gray-800 border border-gray-700 rounded-l-xl px-4 py-2 text-xs focus:outline-none focus:border-[#D4AF37] text-[#EDE6DA] placeholder-gray-500"
+                className="flex-grow border border-neutral-700 bg-neutral-800 rounded-l-full px-4 py-2 font-jakarta font-normal text-sm focus:outline-none focus:border-[#C9A84C] text-white placeholder-neutral-500"
               />
               <button
                 type="submit"
-                className="bg-[#D4AF37] hover:bg-[#c49e2f] text-[#1A1A1A] px-4 py-2 rounded-r-xl transition-colors flex items-center justify-center"
+                className="bg-[#C9A84C] hover:bg-[#b8962e] text-[#1A1A1A] px-4 py-2 rounded-r-full transition-colors duration-200 flex items-center justify-center"
                 aria-label="Subscribe"
               >
                 <Send className="w-4 h-4" />
@@ -147,7 +147,7 @@ export const Footer: React.FC = () => {
                 href="https://www.instagram.com/kaelora.jewellery"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-800 hover:bg-[#D4AF37] hover:text-[#1A1A1A] rounded-full transition-all duration-300"
+                className="p-2 bg-neutral-800 hover:bg-[#C9A84C] hover:text-[#1A1A1A] rounded-full transition-colors duration-200"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />
@@ -156,7 +156,7 @@ export const Footer: React.FC = () => {
                 href="https://www.facebook.com/profile.php?id=61590032346143"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-800 hover:bg-[#D4AF37] hover:text-[#1A1A1A] rounded-full transition-all duration-300"
+                className="p-2 bg-neutral-800 hover:bg-[#C9A84C] hover:text-[#1A1A1A] rounded-full transition-colors duration-200"
                 aria-label="Facebook"
               >
                 <Facebook className="w-4 h-4" />
@@ -165,7 +165,7 @@ export const Footer: React.FC = () => {
                 href="https://wa.me/916305517109?text=Hello%20KAELORA%20Jewellery%2C%20I'm%20interested%20in%20your%20jewellery%20collection."
                 target="_blank"
                 rel="noreferrer"
-                className="p-2 bg-gray-800 hover:bg-[#D4AF37] hover:text-[#1A1A1A] rounded-full transition-all duration-300 font-bold text-xs flex items-center justify-center font-serif text-[#D4AF37]"
+                className="p-2 bg-neutral-800 hover:bg-[#C9A84C] hover:text-[#1A1A1A] rounded-full transition-colors duration-200 font-medium text-xs flex items-center justify-center font-body font-medium text-[#D4AF37]"
               >
                 WA
               </a>
@@ -175,7 +175,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Footer Sub-Info Row */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 gap-4">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-between font-jakarta font-normal text-xs text-neutral-500 tracking-wide gap-4">
           <p>© {currentYear} KAELORA Jewellery Store. All Rights Reserved. Crafted for Timeless Elegance.</p>
           
           <div className="flex items-center gap-6">

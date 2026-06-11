@@ -40,7 +40,7 @@ export default function AdminUsersPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-semibold mb-2">Users Management</h2>
+          <h2 className="text-2xl font-display font-light tracking-wide mb-2">Users Management</h2>
           <p className="text-sm text-gray-600">View and manage registered users.</p>
         </div>
         <button
@@ -59,25 +59,25 @@ export default function AdminUsersPage() {
           placeholder="Search by email or name..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+          className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
         />
       </div>
 
       {/* Users Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-4">
+        <div className="bg-white border border-amber-100 rounded-3xl p-4">
           <div className="flex items-center gap-3">
             <Users className="text-burgundy" size={24} />
             <div>
               <p className="text-sm text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold">{users.length}</p>
+              <p className="text-2xl font-normal">{users.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl overflow-hidden">
+      <div className="bg-white border border-amber-100 rounded-3xl overflow-hidden">
         {loading && users.length === 0 ? (
           <div className="p-6 text-center text-gray-500">Loading users...</div>
         ) : filteredUsers.length === 0 ? (
@@ -85,20 +85,20 @@ export default function AdminUsersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-[#EDE6DA]">
+              <thead className="bg-gray-50 border-b border-amber-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Phone</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Joined</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Role</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Orders</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Joined</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Role</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Orders</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.map(user => (
-                  <tr key={user.id || user.uid} className="border-b border-[#EDE6DA] hover:bg-gray-50">
-                    <td className="px-6 py-3 text-sm text-gray-700 font-semibold">
+                  <tr key={user.id || user.uid} className="border-b border-amber-100 hover:bg-gray-50">
+                    <td className="px-6 py-3 text-sm text-gray-700 font-medium">
                       {user.fullName || user.displayName || 'N/A'}
                     </td>
                     <td className="px-6 py-3 text-sm text-gray-700">
@@ -124,7 +124,7 @@ export default function AdminUsersPage() {
                         {user.role || 'user'}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm font-semibold text-gray-700">
+                    <td className="px-6 py-3 text-sm font-medium text-gray-700">
                       {user.orders?.length || 0}
                     </td>
                   </tr>

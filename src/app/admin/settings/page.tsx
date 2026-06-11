@@ -21,7 +21,7 @@ export default function AdminSettingsPage() {
     facebookLink: 'https://facebook.com/kaelora',
     freeShippingLimit: 299,
     standardShippingCharge: 19,
-    announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
+    announcementText: "",
     giftGoal: 3,
   });
 
@@ -74,41 +74,41 @@ export default function AdminSettingsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-serif font-semibold mb-2">Store Settings</h2>
+        <h2 className="text-2xl font-display font-light tracking-wide mb-2">Store Settings</h2>
         <p className="text-sm text-gray-600">Manage store information, shipping, and contact details.</p>
       </div>
 
       <div className="space-y-6">
         {/* Store Information Section */}
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
+          <h3 className="text-lg font-medium mb-6 flex items-center gap-2">
             <Package size={20} className="text-burgundy" />
             Store Information
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Store Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Store Name</label>
               <input
                 type="text"
                 value={form.storeName}
                 onChange={e => setForm({ ...form, storeName: e.target.value })}
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Store Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Store Email</label>
               <input
                 type="email"
                 value={form.storeEmail}
                 onChange={e => setForm({ ...form, storeEmail: e.target.value })}
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Phone size={16} className="inline mr-2" />
                 Store Phone
               </label>
@@ -116,12 +116,12 @@ export default function AdminSettingsPage() {
                 type="tel"
                 value={form.storePhone}
                 onChange={e => setForm({ ...form, storePhone: e.target.value })}
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Phone size={16} className="inline mr-2" />
                 WhatsApp Number
               </label>
@@ -129,18 +129,18 @@ export default function AdminSettingsPage() {
                 type="tel"
                 value={form.whatsappNumber}
                 onChange={e => setForm({ ...form, whatsappNumber: e.target.value })}
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
           </div>
 
           <div className="mt-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Announcement Banner Text</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Announcement Banner Text</label>
             <textarea
               value={form.announcementText}
               onChange={e => setForm({ ...form, announcementText: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+              className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
             />
             <p className="text-xs text-gray-500 mt-2">This text appears in the site header banner</p>
           </div>
@@ -149,15 +149,15 @@ export default function AdminSettingsPage() {
 
 
         {/* Social Media Links */}
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
+          <h3 className="text-lg font-medium mb-6 flex items-center gap-2">
             <Instagram size={20} className="text-burgundy" />
             Social Media Links
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Facebook size={16} className="inline mr-2 text-blue-600" />
                 Facebook Page URL
               </label>
@@ -166,12 +166,12 @@ export default function AdminSettingsPage() {
                 value={form.facebookLink}
                 onChange={e => setForm({ ...form, facebookLink: e.target.value })}
                 placeholder="https://facebook.com/yourpage"
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Instagram size={16} className="inline mr-2 text-pink-600" />
                 Instagram Profile URL
               </label>
@@ -180,55 +180,55 @@ export default function AdminSettingsPage() {
                 value={form.instagramLink}
                 onChange={e => setForm({ ...form, instagramLink: e.target.value })}
                 placeholder="https://instagram.com/yourprofile"
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
             </div>
           </div>
         </div>
 
         {/* Shipping Settings */}
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
-          <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
+          <h3 className="text-lg font-medium mb-6 flex items-center gap-2">
             <Truck size={20} className="text-burgundy" />
             Shipping Configuration
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Free Delivery Minimum Order</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Free Delivery Minimum Order</label>
               <div className="flex items-center gap-2">
                 <span className="text-gray-600">₹</span>
                 <input
                   type="number"
                   value={form.freeShippingLimit}
                   onChange={e => setForm({ ...form, freeShippingLimit: Number(e.target.value) })}
-                  className="flex-grow px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                  className="flex-grow px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">Orders above this amount get free shipping</p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Standard Shipping Charge</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Standard Shipping Charge</label>
               <div className="flex items-center gap-2">
                 <span className="text-gray-600">₹</span>
                 <input
                   type="number"
                   value={form.standardShippingCharge}
                   onChange={e => setForm({ ...form, standardShippingCharge: Number(e.target.value) })}
-                  className="flex-grow px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                  className="flex-grow px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">Shipping charge for orders below the free shipping limit</p>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Gift Unlock Goal</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Gift Unlock Goal</label>
               <input
                 type="number"
                 value={form.giftGoal}
                 onChange={e => setForm({ ...form, giftGoal: Number(e.target.value) })}
-                className="w-full px-4 py-2 border border-[#EDE6DA] rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
+                className="w-full px-4 py-2 border border-amber-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-burgundy"
               />
               <p className="text-xs text-gray-500 mt-2">Number of products customer must buy to unlock complimentary gift</p>
             </div>
@@ -236,8 +236,8 @@ export default function AdminSettingsPage() {
         </div>
 
         {/* Summary of Current Settings */}
-        <div className="bg-gradient-to-r from-burgundy/10 to-amber-100/10 border border-[#EDE6DA] rounded-3xl p-6">
-          <h3 className="text-lg font-semibold mb-4">Current Configuration Preview</h3>
+        <div className="bg-gradient-to-r from-burgundy/10 to-amber-100/10 border border-amber-100 rounded-3xl p-6">
+          <h3 className="text-lg font-medium mb-4">Current Configuration Preview</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-600">Free Shipping Applies When:</p>
@@ -249,11 +249,11 @@ export default function AdminSettingsPage() {
             </div>
             <div>
               <p className="text-gray-600">Gift Unlock:</p>
-              <p className="font-semibold text-burgundy">After {form.giftGoal} Products Purchased</p>
+              <p className="font-medium text-burgundy">After {form.giftGoal} Products Purchased</p>
             </div>
             <div>
               <p className="text-gray-600">Customer Service:</p>
-              <p className="font-semibold text-burgundy">{form.storePhone}</p>
+              <p className="font-medium text-burgundy">{form.storePhone}</p>
             </div>
           </div>
         </div>
@@ -263,7 +263,7 @@ export default function AdminSettingsPage() {
           <button
             onClick={handleSave}
             disabled={saveLoading}
-            className="flex items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50 font-semibold"
+            className="flex items-center gap-2 px-6 py-3 bg-burgundy text-white rounded-lg hover:bg-opacity-90 disabled:opacity-50 font-medium"
           >
             {saveLoading ? (
               <Loader2 size={20} className="animate-spin" />

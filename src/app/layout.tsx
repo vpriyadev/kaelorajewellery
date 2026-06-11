@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Cormorant_Garamond, Space_Grotesk, Plus_Jakarta_Sans } from 'next/font/google';
 import { AppProvider } from '../context/AppContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -9,15 +9,30 @@ import Toast from '../components/Toast';
 import AuthModal from '../components/AuthModal';
 import './globals.css';
 
-
-
-const inter = Inter({
+const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
-  variable: '--font-sans',
+  weight: ['300', '400', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-body',
+  display: 'swap',
+});
+
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  variable: '--font-jakarta',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://kaelorajewellery.com'),
   title: 'KAELORA Jewellery | Elegant • Affordable • Beautiful',
   description: 'Shop luxury fashion jewellery including earrings, chains and bangles suitable for daily wear, parties, and festive celebrations. Experience premium craftsmanship at affordable prices.',
   keywords: 'fashion jewellery, earrings, gold chains, designer bangles, luxury jewellery, daily wear jewellery, party jewellery, kaelora',
@@ -57,8 +72,8 @@ export default function RootLayout({
   )}`;
 
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="bg-[#F8F5F0] text-[#1A1A1A] antialiased flex flex-col min-h-screen font-sans">
+    <html lang="en" className={`${cormorant.variable} ${spaceGrotesk.variable} ${jakartaSans.variable}`}>
+      <body className="bg-[#F8F5F0] text-[#1A1A1A] antialiased flex flex-col min-h-dvh font-body">
         <AppProvider>
           {/* Cinematic Intro Animation Overlay */}
           <Intro />
@@ -73,7 +88,7 @@ export default function RootLayout({
           <AuthModal />
 
           {/* Main Showcase Page Container */}
-          <main className="flex-grow pt-24">
+          <main className="flex-grow pt-0 md:pt-16">
             {children}
           </main>
 
@@ -82,7 +97,7 @@ export default function RootLayout({
             href={whatsappUrl}
             target="_blank"
             rel="noreferrer"
-            className="fixed bottom-6 left-6 z-[999] flex items-center justify-center w-14 h-14 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-full shadow-2xl hover:shadow-emerald-200/50 hover:rotate-6 transition-all duration-300 group"
+            className="fixed bottom-6 left-6 z-[999] flex items-center justify-center w-14 h-14 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white rounded-full shadow-2xl hover:shadow-emerald-200/50 hover:rotate-6 transition-transform duration-200 group"
             title="Chat on WhatsApp"
           >
             {/* WhatsApp Logo Icon */}
@@ -95,7 +110,7 @@ export default function RootLayout({
             </svg>
             
             {/* Custom Tooltip text on hover */}
-            <span className="absolute left-16 bg-[#1A1A1A] text-[#EDE6DA] text-xs font-semibold px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl border border-gray-700 whitespace-nowrap">
+            <span className="absolute left-16 bg-[#1A1A1A] text-[#EDE6DA] text-xs font-medium px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl border border-gray-700 whitespace-nowrap">
               WhatsApp Support
             </span>
           </a>

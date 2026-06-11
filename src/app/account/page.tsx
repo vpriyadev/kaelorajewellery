@@ -194,12 +194,12 @@ export default function AccountPage() {
 
   if (!user) {
     return (
-      <div className="max-w-md mx-auto px-6 py-24 font-body text-center">
-        <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6 border border-[#EDE6DA]">
+      <div className="max-w-md mx-auto px-6 pb-24 font-body text-center">
+        <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6 border border-amber-100">
           <ShieldCheck className="w-7 h-7 text-[#D4AF37]" />
         </div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] font-semibold">Secure Account Gateway</span>
-        <h2 className="text-2xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
+        <span className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-medium">Secure Account Gateway</span>
+        <h2 className="text-2xl font-display font-light tracking-wide text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
           Please Sign In
         </h2>
         <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed mt-3">
@@ -207,7 +207,7 @@ export default function AccountPage() {
         </p>
         <button
           onClick={() => setAuthModalOpen(true)}
-          className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
+          className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-medium uppercase tracking-widest rounded-xl transition-transform duration-200 shadow-md active:scale-95"
         >
           Sign In / Register
         </button>
@@ -220,32 +220,32 @@ export default function AccountPage() {
   const isGiftUnlocked = totalBought >= settings.giftGoal;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body text-[#1A1A1A]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 font-body text-[#1A1A1A]">
       
       {/* Title */}
       <div className="text-center mb-10">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Member Area</span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+        <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Member Area</span>
+        <h1 className="text-3xl sm:text-4xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-1 tracking-wider">
           My Account
         </h1>
-        <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+        <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         
         {/* LEFT COLUMN: DESKTOP TABS MENU */}
-        <aside className="w-full lg:w-64 flex flex-col gap-2 bg-[#F8F5F0] border border-[#EDE6DA] rounded-2xl p-4 shadow-sm">
-          <div className="p-3 border-b border-[#EDE6DA] mb-2 text-center sm:text-left">
-            <h3 className="text-sm font-bold truncate">{user.displayName}</h3>
-            <span className="text-[10px] text-gray-400 block truncate">{user.email}</span>
+        <aside className="w-full lg:w-64 flex flex-col gap-2 bg-[#F8F5F0] border border-amber-100 rounded-2xl p-4 shadow-sm">
+          <div className="p-3 border-b border-amber-100 mb-2 text-center sm:text-left">
+            <h3 className="text-sm font-medium truncate">{user.displayName}</h3>
+            <span className="text-xs text-gray-400 block truncate">{user.email}</span>
           </div>
 
           <button
             onClick={() => setActiveTab('profile')}
-            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-colors ${
+            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-medium uppercase tracking-wider flex items-center gap-2 transition-colors ${
               activeTab === 'profile'
                 ? 'bg-[#1A1A1A] text-[#EDE6DA]'
-                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-gray-200'
+                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-amber-100'
             }`}
           >
             <User className="w-4 h-4" />
@@ -254,10 +254,10 @@ export default function AccountPage() {
 
           <button
             onClick={() => setActiveTab('orders')}
-            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-colors ${
+            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-medium uppercase tracking-wider flex items-center gap-2 transition-colors ${
               activeTab === 'orders'
                 ? 'bg-[#1A1A1A] text-[#EDE6DA]'
-                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-gray-200'
+                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-amber-100'
             }`}
           >
             <Package className="w-4 h-4" />
@@ -266,10 +266,10 @@ export default function AccountPage() {
 
           <button
             onClick={() => setActiveTab('addresses')}
-            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition-colors ${
+            className={`w-full text-left py-2.5 px-4 rounded-xl text-xs font-medium uppercase tracking-wider flex items-center gap-2 transition-colors ${
               activeTab === 'addresses'
                 ? 'bg-[#1A1A1A] text-[#EDE6DA]'
-                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-gray-200'
+                : 'hover:bg-white text-gray-600 hover:text-black border border-transparent hover:border-amber-100'
             }`}
           >
             <MapPin className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function AccountPage() {
           {user.isAdmin && (
             <button
               onClick={() => router.push('/admin')}
-              className="w-full text-left py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider text-[#D4AF37] hover:bg-[#EDE6DA]/40 transition-colors border border-dashed border-[#D4AF37]/50 mt-2 flex items-center gap-2"
+              className="w-full text-left py-2.5 px-4 rounded-xl text-xs font-medium uppercase tracking-wider text-[#D4AF37] hover:bg-[#EDE6DA]/40 transition-colors border border-dashed border-[#D4AF37]/50 mt-2 flex items-center gap-2"
             >
               👑 Admin Dashboard
             </button>
@@ -296,35 +296,35 @@ export default function AccountPage() {
         </aside>
 
         {/* RIGHT COLUMN: DETAIL TABS CONTENT DISPLAY */}
-        <div className="flex-1 w-full bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-8 shadow-sm">
+        <div className="flex-1 w-full bg-white border border-amber-100 rounded-3xl p-6 sm:p-8 shadow-sm">
           
           {/* ----------------------------------------------------
               TAB 1: USER PROFILE & REWARDS
               ---------------------------------------------------- */}
           {activeTab === 'profile' && (
             <div className="flex flex-col gap-6">
-              <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
+              <h3 className="text-base font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
                 Member Profile Details
               </h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs border-b border-gray-100 pb-6">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Registered Name:</span>
-                  <span className="font-semibold text-sm">{user.displayName}</span>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider font-normal">Registered Name:</span>
+                  <span className="font-medium text-sm">{user.displayName}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Email Address:</span>
-                  <span className="font-semibold text-sm">{user.email}</span>
+                  <span className="text-xs text-gray-400 uppercase tracking-wider font-normal">Email Address:</span>
+                  <span className="font-medium text-sm">{user.email}</span>
                 </div>
               </div>
 
               {/* LOYALTY PROGRESS TRACKING WIDGET */}
               <div>
-                <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] mb-4">
+                <h3 className="text-base font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A] mb-4">
                   Kaelora Club Reward Status
                 </h3>
 
-                <div className="bg-[#F8F5F0] border border-[#EDE6DA] rounded-2xl p-6 flex flex-col sm:flex-row gap-5 items-center">
+                <div className="bg-[#F8F5F0] border border-amber-100 rounded-2xl p-6 flex flex-col sm:flex-row gap-5 items-center">
                   <div className="w-14 h-14 rounded-full bg-[#EDE6DA] flex items-center justify-center text-[#D4AF37] border border-[#D4AF37]/50 shadow-md">
                     <Gift className="w-7 h-7" />
                   </div>
@@ -332,17 +332,17 @@ export default function AccountPage() {
                   <div className="flex-grow flex flex-col gap-2.5 text-center sm:text-left w-full">
                     {isGiftUnlocked ? (
                       <div>
-                        <h4 className="text-sm font-bold text-[#1A1A1A] flex items-center justify-center sm:justify-start gap-1">
+                        <h4 className="text-sm font-medium text-[#1A1A1A] flex items-center justify-center sm:justify-start gap-1">
                           <Award className="w-4 h-4 text-[#D4AF37]" />
                           <span>Premium Gift Unlocked!</span>
                         </h4>
-                        <p className="text-xs text-emerald-800 font-semibold leading-relaxed mt-1">
+                        <p className="text-xs text-emerald-800 font-medium leading-relaxed mt-1">
                           🎉 Congratulations! You have purchased a total of **{totalBought}** products. Your next order will automatically package a complimentary premium KAELORA accessory!
                         </p>
                       </div>
                     ) : (
                       <div>
-                        <h4 className="text-sm font-bold text-gray-700">Rewards Status Progress</h4>
+                        <h4 className="text-sm font-medium text-gray-700">Rewards Status Progress</h4>
                         <p className="text-xs text-gray-500 mt-1">
                           Buy **{settings.giftGoal} jewellery items** to receive a beautiful complimentary gift! You have currently bought **{totalBought} / {settings.giftGoal} items.**
                         </p>
@@ -367,7 +367,7 @@ export default function AccountPage() {
               ---------------------------------------------------- */}
           {activeTab === 'orders' && (
             <div className="flex flex-col gap-6">
-              <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
+              <h3 className="text-base font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A] border-b border-gray-100 pb-3">
                 My Purchases
               </h3>
 
@@ -388,17 +388,17 @@ export default function AccountPage() {
                     return (
                       <div
                         key={ord.id}
-                        className="border border-[#EDE6DA] rounded-2xl p-5 shadow-sm bg-white flex flex-col gap-4"
+                        className="border border-amber-100 rounded-2xl p-5 shadow-sm bg-white flex flex-col gap-4"
                       >
                         {/* Order card top banner */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#EDE6DA]/40 pb-3 gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-100/40 pb-3 gap-2">
                           <div className="text-xs">
-                            <span className="font-semibold text-[#1A1A1A] block">Order ID: <span className="font-mono font-bold text-gray-800">{ord.id}</span></span>
-                            <span className="text-gray-400 text-[10px] mt-0.5 block">{new Date(ord.createdAt || '').toLocaleString('en-IN')}</span>
+                            <span className="font-medium text-[#1A1A1A] block">Order ID: <span className="font-mono font-normal text-gray-800">{ord.id}</span></span>
+                            <span className="text-gray-400 text-xs mt-0.5 block">{new Date(ord.createdAt || '').toLocaleString('en-IN')}</span>
                           </div>
                           
                           {/* Order Status */}
-                          <span className={`text-[10px] uppercase font-bold tracking-wider px-3.5 py-1 rounded-full border self-start ${statusColors}`}>
+                          <span className={`text-xs uppercase font-normal tracking-wider px-3.5 py-1 rounded-full border self-start ${statusColors}`}>
                             {status}
                           </span>
                         </div>
@@ -408,7 +408,7 @@ export default function AccountPage() {
                           {/* Connecting lines */}
                           <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-200 -translate-y-1/2 z-0" />
                           <div
-                            className="absolute top-1/2 left-4 h-0.5 bg-[#D4AF37] -translate-y-1/2 z-0 transition-all duration-500"
+                            className="absolute top-1/2 left-4 h-0.5 bg-[#D4AF37] -translate-y-1/2 z-0 transition-transform duration-300"
                             style={{
                               width: status === 'delivered' ? '100%' : status === 'shipped' ? '50%' : '0%'
                             }}
@@ -422,15 +422,15 @@ export default function AccountPage() {
                             
                             return (
                               <div key={step} className="flex flex-col items-center gap-1.5 relative z-10">
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-[10px] font-bold transition-all ${
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-normal transition-colors duration-200 ${
                                   active 
                                     ? 'bg-[#1A1A1A] border-[#D4AF37] text-white scale-110 shadow-md' 
                                     : 'bg-white border-gray-300 text-gray-400'
                                 }`}>
                                   {idx + 1}
                                 </div>
-                                <span className={`text-[9px] uppercase tracking-wider font-semibold capitalize ${
-                                  active ? 'text-[#1A1A1A] font-bold' : 'text-gray-400'
+                                <span className={`text-xs uppercase tracking-wider font-medium capitalize ${
+                                  active ? 'text-[#1A1A1A] font-normal' : 'text-gray-400'
                                 }`}>
                                   {step}
                                 </span>
@@ -440,7 +440,7 @@ export default function AccountPage() {
                         </div>
 
                         {/* List products in order */}
-                        <div className="flex flex-col gap-3 py-2 border-b border-[#EDE6DA]/40">
+                        <div className="flex flex-col gap-3 py-2 border-b border-amber-100/40">
                           {(() => {
                             console.log("Order:", ord);
                             console.log("Items:", ord.items);
@@ -453,16 +453,16 @@ export default function AccountPage() {
                               return (
                                 <div key={i} className="flex items-center gap-3.5 text-xs">
                                   <div className="flex-grow min-w-0">
-                                    <h4 className="font-semibold text-gray-800 truncate">{itemName}</h4>
-                                    <span className="text-[10px] text-gray-400">Quantity: {itemQty}</span>
+                                    <h4 className="font-medium text-gray-800 truncate">{itemName}</h4>
+                                    <span className="text-xs text-gray-400">Quantity: {itemQty}</span>
                                   </div>
-                                  <span className="font-bold text-[#1A1A1A] whitespace-nowrap">₹{(itemPrice * itemQty).toLocaleString('en-IN')}</span>
+                                  <span className="font-semibold text-[#1A1A1A] whitespace-nowrap">₹{(itemPrice * itemQty).toLocaleString('en-IN')}</span>
                                 </div>
                               );
                             });
                           })()}
                           {!ord.items?.length && !ord.products?.length && (
-                            <div className="text-center py-4 text-gray-400 italic text-[10px]">
+                            <div className="text-center py-4 text-gray-400 italic text-xs">
                               No product details available for this order.
                             </div>
                           )}
@@ -471,16 +471,16 @@ export default function AccountPage() {
                         {/* Shipping details and totals footer */}
                         <div className="flex flex-col sm:flex-row justify-between text-xs text-gray-500 gap-4 mt-1">
                           <div>
-                            <span className="font-bold text-[#1A1A1A] uppercase tracking-wider text-[10px] block mb-1">Shipping Recipient:</span>
+                            <span className="font-normal text-[#1A1A1A] uppercase tracking-wider text-xs block mb-1">Shipping Recipient:</span>
                             {ord.shippingAddress ? (
                               <>
-                                <p className="font-semibold">{ord.shippingAddress?.fullName || 'N/A'}</p>
-                                <p className="mt-0.5 text-gray-400 font-body text-[10px] leading-relaxed max-w-xs">
+                                <p className="font-medium">{ord.shippingAddress?.fullName || 'N/A'}</p>
+                                <p className="mt-0.5 text-gray-400 font-body text-xs leading-relaxed max-w-xs">
                                   {ord.shippingAddress?.addressLine || 'Address not available'}, {ord.shippingAddress?.city || ''}, {ord.shippingAddress?.state || ''} - {ord.shippingAddress?.pincode || ''}
                                 </p>
                               </>
                             ) : (
-                              <p className="text-gray-400 italic text-[10px]">Shipping address not available</p>
+                              <p className="text-gray-400 italic text-xs">Shipping address not available</p>
                             )}
                             {(() => {
                               const cancelDate = parseSafeDate(ord.cancelledAt);
@@ -491,11 +491,11 @@ export default function AccountPage() {
                           </div>
                           
                           <div className="sm:text-right flex flex-col sm:justify-end">
-                            <span className="text-gray-400 font-semibold block mb-0.5">Grand Total Amount Paid:</span>
-                            <span className="font-bold font-serif text-[#1A1A1A] text-sm">₹{((ord.totalAmount || 0) as number).toLocaleString('en-IN')}</span>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">via {ord.paymentMethod || 'Unknown'}</span>
+                            <span className="text-gray-400 font-medium block mb-0.5">Grand Total Amount Paid:</span>
+                            <span className="font-semibold font-body font-medium text-[#1A1A1A] text-sm">₹{((ord.totalAmount || 0) as number).toLocaleString('en-IN')}</span>
+                            <span className="text-xs font-normal text-gray-400 uppercase tracking-widest mt-1 block">via {ord.paymentMethod || 'Unknown'}</span>
                             {ord.cancelledBy && (
-                              <span className="text-[10px] font-bold text-red-600 mt-1 block">Cancelled by: {ord.cancelledBy.name || ord.cancelledBy.id} ({ord.cancelledBy.role || 'user'})</span>
+                              <span className="text-xs font-semibold text-red-600 mt-1 block">Cancelled by: {ord.cancelledBy.name || ord.cancelledBy.id} ({ord.cancelledBy.role || 'user'})</span>
                             )}
                           </div>
                         </div>
@@ -517,7 +517,7 @@ export default function AccountPage() {
                                   triggerToast('Failed to cancel order.', 'error');
                                 }
                               }}
-                              className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-semibold hover:bg-red-700"
+                              className="px-4 py-2 bg-red-600 text-white rounded-xl text-xs font-medium hover:bg-red-700"
                             >
                               Cancel Order
                             </button>
@@ -529,13 +529,13 @@ export default function AccountPage() {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-10 border border-dashed border-[#EDE6DA] rounded-xl p-4 bg-gray-50">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">
+                <div className="text-center py-10 border border-dashed border-amber-100 rounded-xl p-4 bg-gray-50">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">
                     No order history available.
                   </p>
                   <button
                     onClick={() => router.push('/shop')}
-                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-[10px] font-semibold uppercase tracking-wider rounded-xl shadow-md"
+                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-xs font-medium uppercase tracking-wider rounded-xl shadow-md"
                   >
                     Go To Showcase
                   </button>
@@ -550,12 +550,12 @@ export default function AccountPage() {
           {activeTab === 'addresses' && (
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h3 className="text-base font-serif font-semibold uppercase tracking-widest text-[#1A1A1A]">
+                <h3 className="text-base font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A]">
                   Saved Shipping Profiles
                 </h3>
                 <button
                   onClick={() => openAddressModal()}
-                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-[#2A2A2A] transition-colors"
+                  className="px-4 py-2 bg-[#1A1A1A] text-white text-xs font-medium uppercase tracking-wider rounded-xl hover:bg-[#2A2A2A] transition-colors"
                 >
                   + Add Address
                 </button>
@@ -570,23 +570,23 @@ export default function AccountPage() {
                   {addresses.map((addr) => (
                     <div
                       key={addr.id}
-                      className="border border-[#EDE6DA] rounded-2xl p-5 bg-[#F8F5F0] flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative"
+                      className="border border-amber-100 rounded-2xl p-5 bg-[#F8F5F0] flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative"
                     >
                       {addr.isDefault && (
-                        <div className="absolute top-4 left-4 bg-[#D4AF37] text-white text-[8px] font-bold px-2 py-1 rounded-full">
+                        <div className="absolute top-4 left-4 bg-[#D4AF37] text-white text-xs font-normal px-2 py-1 rounded-full">
                           DEFAULT
                         </div>
                       )}
                       
                       <div className="text-xs flex flex-col gap-1 pr-8 mt-2">
-                        <h4 className="font-bold text-[#1A1A1A] text-sm truncate flex items-center gap-1">
+                        <h4 className="font-medium text-[#1A1A1A] text-sm truncate flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
                           <span>{addr.fullName}</span>
                         </h4>
-                        <span className="text-[10px] text-gray-400 font-bold block mt-1">Mobile: {addr.phone}</span>
+                        <span className="text-xs text-gray-400 font-normal block mt-1">Mobile: {addr.phone}</span>
                         <p className="text-gray-600 mt-2 font-medium leading-relaxed font-body text-xs">
                           {addr.addressLine1}{addr.addressLine2 && <>, {addr.addressLine2}</> }<br />
-                          {addr.city}, {addr.state} - <span className="font-bold text-[#1A1A1A]">{addr.pincode}</span> <br />
+                          {addr.city}, {addr.state} - <span className="font-normal text-[#1A1A1A]">{addr.pincode}</span> <br />
                           {addr.country || 'India'}
                         </p>
                       </div>
@@ -612,16 +612,16 @@ export default function AccountPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 border border-dashed border-[#EDE6DA] rounded-xl p-4 bg-gray-50">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">
+                <div className="text-center py-10 border border-dashed border-amber-100 rounded-xl p-4 bg-gray-50">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">
                     No saved addresses yet.
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1 leading-normal font-body">
+                  <p className="text-xs text-gray-400 mt-1 leading-normal font-body">
                     Add your first address to make checkout faster.
                   </p>
                   <button
                     onClick={() => openAddressModal()}
-                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-[10px] font-semibold uppercase tracking-wider rounded-xl shadow-md"
+                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-xs font-medium uppercase tracking-wider rounded-xl shadow-md"
                   >
                     Add Your First Address
                   </button>
@@ -633,9 +633,9 @@ export default function AccountPage() {
           {/* ADDRESS FORM MODAL */}
           {showAddressModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full max-h-screen overflow-y-auto shadow-xl">
+              <div className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full max-h-dvh overflow-y-auto shadow-xl">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-serif font-semibold text-[#1A1A1A]">
+                  <h3 className="text-lg font-display font-medium tracking-wide text-[#1A1A1A]">
                     {editingAddressId ? 'Edit Address' : 'Add New Address'}
                   </h3>
                   <button onClick={closeAddressModal} className="p-1 hover:bg-gray-100 rounded-lg">
@@ -646,7 +646,7 @@ export default function AccountPage() {
                 <div className="flex flex-col gap-4">
                   {/* Full Name */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Full Name *
                     </label>
                     <input
@@ -654,7 +654,7 @@ export default function AccountPage() {
                       value={formData.fullName}
                       onChange={(e) => handleFormChange('fullName', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.fullName ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.fullName ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="Your full name"
                     />
@@ -663,7 +663,7 @@ export default function AccountPage() {
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Phone Number *
                     </label>
                     <input
@@ -671,7 +671,7 @@ export default function AccountPage() {
                       value={formData.phone}
                       onChange={(e) => handleFormChange('phone', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.phone ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.phone ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="10-digit mobile number"
                     />
@@ -680,7 +680,7 @@ export default function AccountPage() {
 
                   {/* Address Line 1 */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Address Line 1 *
                     </label>
                     <input
@@ -688,7 +688,7 @@ export default function AccountPage() {
                       value={formData.addressLine1}
                       onChange={(e) => handleFormChange('addressLine1', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.addressLine1 ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.addressLine1 ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="Street address, building, apartment"
                     />
@@ -697,21 +697,21 @@ export default function AccountPage() {
 
                   {/* Address Line 2 */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Address Line 2
                     </label>
                     <input
                       type="text"
                       value={formData.addressLine2}
                       onChange={(e) => handleFormChange('addressLine2', e.target.value)}
-                      className="w-full px-3 py-2 border border-[#EDE6DA] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+                      className="w-full px-3 py-2 border border-amber-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
                       placeholder="Apt, suite, etc. (optional)"
                     />
                   </div>
 
                   {/* City */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       City *
                     </label>
                     <input
@@ -719,7 +719,7 @@ export default function AccountPage() {
                       value={formData.city}
                       onChange={(e) => handleFormChange('city', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.city ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.city ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="City"
                     />
@@ -728,7 +728,7 @@ export default function AccountPage() {
 
                   {/* State */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       State *
                     </label>
                     <input
@@ -736,7 +736,7 @@ export default function AccountPage() {
                       value={formData.state}
                       onChange={(e) => handleFormChange('state', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.state ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.state ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="State/Province"
                     />
@@ -745,7 +745,7 @@ export default function AccountPage() {
 
                   {/* Pincode */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Pincode *
                     </label>
                     <input
@@ -753,7 +753,7 @@ export default function AccountPage() {
                       value={formData.pincode}
                       onChange={(e) => handleFormChange('pincode', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.pincode ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.pincode ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="6-digit postal code"
                     />
@@ -762,7 +762,7 @@ export default function AccountPage() {
 
                   {/* Country */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase mb-2">
+                    <label className="block text-xs font-medium text-gray-700 uppercase mb-2">
                       Country *
                     </label>
                     <input
@@ -770,7 +770,7 @@ export default function AccountPage() {
                       value={formData.country}
                       onChange={(e) => handleFormChange('country', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
-                        formErrors.country ? 'border-red-500' : 'border-[#EDE6DA]'
+                        formErrors.country ? 'border-red-500' : 'border-amber-100'
                       }`}
                       placeholder="Country"
                     />
@@ -786,7 +786,7 @@ export default function AccountPage() {
                       onChange={(e) => handleFormChange('isDefault', e.target.checked)}
                       className="w-4 h-4 text-[#D4AF37] border-gray-300 rounded cursor-pointer"
                     />
-                    <label htmlFor="isDefault" className="text-xs font-semibold text-gray-700 cursor-pointer">
+                    <label htmlFor="isDefault" className="text-xs font-medium text-gray-700 cursor-pointer">
                       Set as default shipping address
                     </label>
                   </div>
@@ -795,13 +795,13 @@ export default function AccountPage() {
                   <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
                     <button
                       onClick={closeAddressModal}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-xs font-semibold uppercase rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-xs font-medium uppercase rounded-lg hover:bg-gray-50 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleSaveAddress}
-                      className="flex-1 px-4 py-2 bg-[#1A1A1A] text-white text-xs font-semibold uppercase rounded-lg hover:bg-[#2A2A2A] transition-colors"
+                      className="flex-1 px-4 py-2 bg-[#1A1A1A] text-white text-xs font-medium uppercase rounded-lg hover:bg-[#2A2A2A] transition-colors"
                     >
                       {editingAddressId ? 'Update Address' : 'Add Address'}
                     </button>

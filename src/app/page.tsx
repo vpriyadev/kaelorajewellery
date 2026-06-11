@@ -196,9 +196,10 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col w-full overflow-x-hidden">
-      <section className="relative h-[90vh] sm:h-screen w-full flex items-center justify-center overflow-hidden">
-        {/* Hero Image Background */}
-        <div className="absolute inset-0 z-0">
+      <section className="hidden md:flex relative min-h-dvh sm:h-dvh w-full items-center justify-center overflow-hidden">
+        {/* ================= DESKTOP HERO ================= */}
+        <div className="hidden md:flex absolute inset-0 z-0 w-full h-full">
+          {/* Desktop Hero Image Background */}
           <Image
             src={heroBanner?.imageUrl || heroImageUrl}
             alt={heroBanner?.imageUrl ? 'Hero Banner' : heroImageAlt}
@@ -207,74 +208,117 @@ export default function HomePage() {
             sizes="100vw"
             className="object-cover object-center w-full h-full"
           />
-        </div>
+          {/* Dark Overlay for Text Readability */}
+          <div className="absolute inset-0 bg-black/30 z-5" />
 
-        {/* Dark Overlay for Text Readability */}
-        <div className="absolute inset-0 bg-black/30 z-5" />
-
-        {/* Hero Content */}
-        <div className="relative max-w-5xl mx-auto px-6 text-center flex flex-col items-center justify-center z-20 h-full">
-
-
-          {/* Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.6 }}
-            className="text-lg sm:text-2xl font-serif font-semibold text-[#EDE6DA] uppercase tracking-wider mb-4"
-          >
-            Affordable • Elegant • Beautiful
-          </motion.p>
-          
-          {/* Buttons container */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.9 }}
-            className="flex flex-col sm:flex-row items-center gap-4 mt-10 w-full sm:w-auto"
-          >
-            {heroBanner?.imageUrl && heroBanner?.buttonText && (
-              <Link
-                href={heroBanner?.buttonLink?.trim() ? heroBanner.buttonLink : '/shop'}
-                className="w-full sm:w-56 py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-xl shadow-gray-400/20 active:scale-95 flex items-center justify-center gap-1.5 group border border-gray-800"
-              >
-                <span>{heroBanner.buttonText}</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            )}
+          {/* Desktop Hero Content */}
+          <div className="relative max-w-5xl mx-auto px-6 text-center flex flex-col items-center justify-center z-20 h-full w-full">
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.6 }}
+              className="text-lg sm:text-2xl font-body font-normal text-[#EDE6DA] tracking-[0.15em] uppercase mb-4"
+            >
+              Affordable • Elegant • Beautiful
+            </motion.p>
+            
+            {/* Buttons container */}
             <motion.div
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
-  className="w-full sm:w-56"
->
-  <Link
-    href="/shop"
-    className="w-full h-full flex items-center justify-center py-4 bg-white/85 hover:bg-white text-[#1A1A1A] text-xs font-semibold uppercase tracking-[0.2em] rounded-3xl transition-all shadow-md active:scale-95 border border-[#EDE6DA] hover:border-[#D4AF37]"
-  >
-    <span>Shop Now</span>
-  </Link>
-</motion.div>
-</motion.div>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute bottom-8 flex flex-col items-center gap-1.5 opacity-60 text-xs text-white font-body font-semibold uppercase tracking-widest cursor-pointer"
-            onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <span>Scroll Down</span>
-            <div className="w-[1.5px] h-6 bg-[#D4AF37] rounded-full" />
-          </motion.div>
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.9 }}
+              className="flex flex-col sm:flex-row items-center gap-4 mt-10 w-full sm:w-auto"
+            >
+              {heroBanner?.imageUrl && heroBanner?.buttonText && (
+                <Link
+                  href={heroBanner?.buttonLink?.trim() ? heroBanner.buttonLink : '/shop'}
+                  className="w-full sm:w-56 py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-medium uppercase tracking-[0.2em] rounded-3xl transition-transform duration-200 shadow-xl shadow-gray-400/20 active:scale-95 flex items-center justify-center gap-1.5 group border border-gray-800"
+                >
+                  <span>{heroBanner.buttonText}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              )}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-56"
+              >
+                <Link
+                  href="/shop"
+                  className="w-full h-full flex items-center justify-center py-4 bg-white/85 hover:bg-white text-[#1A1A1A] text-xs font-medium uppercase tracking-[0.2em] rounded-3xl transition-transform duration-200 shadow-md active:scale-95 border border-amber-100 hover:border-[#D4AF37]"
+                >
+                  <span>Shop Now</span>
+                </Link>
+              </motion.div>
+            </motion.div>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute bottom-8 flex flex-col items-center gap-1.5 opacity-60 text-xs text-white font-body font-medium uppercase tracking-widest cursor-pointer"
+              onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              <span>Scroll Down</span>
+              <div className="w-[1.5px] h-6 bg-[#D4AF37] rounded-full" />
+            </motion.div>
+          </div>
         </div>
-      </section>
 
-      <section id="categories" className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
+        </section>
+
+        {/* ================= MOBILE HERO ================= */}
+        <div className="flex md:hidden relative w-full h-[75vw] max-h-[420px] px-4 mt-26">
+          {/* Mobile Hero Image Container */}
+          <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-lg border border-amber-100/50">
+            <Image
+              src="/images/hero-mobile2.png"
+              alt="Hero Banner Mobile"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[center_15%] w-full h-full"
+            />
+            
+            {/* Bottom gradient overlay */}
+            <div className="absolute bottom-0 left-0 right-0 rounded-b-2xl"
+              style={{background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)'}}>
+              <div className="p-5 pb-6">
+                
+                {/* Small label — no background, just clean text */}
+                <p className="text-white/60 text-xs font-body tracking-[0.3em] uppercase mb-3">
+                  New Collection 2025
+                </p>
+
+                {/* Main headline */}
+                <h1 className="font-display font-light text-[1.75rem] text-white leading-[1.15] tracking-wide mb-5">
+                  Minimal<br/>Everyday Jewellery
+                </h1>
+
+                {/* Two matching buttons — same size, same shape */}
+                <div className="flex items-center gap-3">
+                  <Link href="/shop"
+                    className="flex-1 text-center bg-white text-[#1A1A1A] text-xs font-body font-medium tracking-[0.2em] uppercase py-2.5 rounded-full transition-colors hover:bg-white/90">
+                    Shop Now
+                  </Link>
+                  <Link href="/shop?category=earrings"
+                    className="flex-1 text-center bg-transparent border border-white/70 text-white text-xs font-body font-medium tracking-[0.2em] uppercase py-2.5 rounded-full hover:bg-white/10 transition-colors">
+                    New Arrivals
+                  </Link>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <section id="categories" className="py-20 bg-[#F8F5F0] border-t border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Exquisite Selection</span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Exquisite Selection</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
               Shop By Categories
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -285,7 +329,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="group relative h-96 rounded-[2rem] overflow-hidden border border-[#EDE6DA] shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
+                className="group relative h-96 rounded-[2rem] overflow-hidden border border-amber-100 shadow-lg hover:shadow-2xl transition-colors duration-300 bg-white"
               >
                 <div
                   className={`absolute inset-0 transition-transform duration-700 group-hover:scale-105 ${!cat.image ? 'bg-gradient-to-br from-[#F8F5F0] to-[#EFE9E2]' : 'bg-cover bg-center'}`}
@@ -294,10 +338,10 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A]/85 via-transparent to-transparent z-10" />
 
                 <div className="absolute bottom-8 left-8 right-8 z-20 flex flex-col justify-end gap-2 text-white">
-                  <span className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-semibold font-body">
+                  <span className="text-xs uppercase tracking-widest text-[#D4AF37] font-medium font-body">
                     {cat.count} {cat.count === 1 ? 'Model' : 'Models'}
                   </span>
-                  <h3 className="text-3xl font-serif font-semibold uppercase tracking-wider">
+                  <h3 className="text-3xl font-body font-medium tracking-widest uppercase">
                     {cat.name}
                   </h3>
                   <p className="text-xs text-gray-200/90 font-body leading-relaxed mb-4">
@@ -305,7 +349,7 @@ export default function HomePage() {
                   </p>
                   <Link
                     href={cat.href}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#D4AF37] hover:text-white transition-colors font-body"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-[#D4AF37] hover:text-white transition-colors font-body"
                   >
                     <span>View Category</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -317,14 +361,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-white border-t border-[#EDE6DA]/60">
+      <section className="py-20 bg-white border-t border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Luxury Lookbook</span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Luxury Lookbook</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
               Featured Collections
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -335,7 +379,7 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="flex flex-col rounded-[2rem] border border-[#EDE6DA] overflow-hidden bg-[#F8F5F0] hover:shadow-xl transition-all duration-300"
+                className="flex flex-col rounded-[2rem] border border-amber-100 overflow-hidden bg-[#F8F5F0] hover:shadow-xl transition-colors duration-200"
               >
                 <div className="h-72 overflow-hidden relative group">
                   {(() => {
@@ -356,13 +400,13 @@ export default function HomePage() {
                 </div>
                 <div className="p-6 flex flex-col justify-between flex-grow gap-4">
                   <div>
-                    <h3 className="text-xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wide">
+                    <h3 className="text-xl font-body font-medium tracking-widest uppercase text-[#1A1A1A]">
                       {coll.name}
                     </h3>
                   </div>
                   <Link
                     href={`/product/${normalizeSlug(coll.slug)}`}
-                    className="inline-flex items-center gap-1 px-5 py-3 bg-white border border-[#EDE6DA] hover:border-[#D4AF37] text-xs font-semibold uppercase tracking-wider text-[#1A1A1A] rounded-2xl transition-all font-body"
+                    className="inline-flex items-center gap-1 px-5 py-3 bg-white border border-amber-100 hover:border-[#D4AF37] text-xs font-medium uppercase tracking-wider text-[#1A1A1A] rounded-2xl transition-colors duration-200 font-body"
                   >
                     <span>Explore Product</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -374,18 +418,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-white border-t border-[#EDE6DA]/60">
+      <section className="py-20 bg-white border-t border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-4">
             <div>
-              <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Latest Additions</span>
-              <h2 className="text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+              <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Latest Additions</span>
+              <h2 className="text-3xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
                 New Arrivals
               </h2>
             </div>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-[#1A1A1A] hover:text-[#D4AF37] transition-colors border-b border-[#1A1A1A] hover:border-[#D4AF37] pb-1 font-body"
+              className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-[#1A1A1A] hover:text-[#D4AF37] transition-colors border-b border-[#1A1A1A] hover:border-[#D4AF37] pb-1 font-body"
             >
               <span>View All Arrivals</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -399,7 +443,7 @@ export default function HomePage() {
             {newArrivalProducts.map((prod) => (
               <div
                 key={prod.id}
-                className="w-[320px] min-w-[320px] max-w-[320px] rounded-[2rem] border border-[#EDE6DA] bg-white overflow-hidden shadow-sm"
+                className="w-full max-w-xs rounded-[2rem] border border-amber-100 bg-white overflow-hidden shadow-sm"
               >
                 <Link href={`/product/${normalizeSlug(prod.slug)}`} className="block w-full">
                   <div className="w-full">
@@ -413,10 +457,10 @@ export default function HomePage() {
                           width={320}
                           height={380}
                           alt={prod.name}
-                          className="w-full h-[380px] object-cover"
+                          className="w-full h-96 object-cover"
                         />
                       ) : (
-                        <div className="w-full h-[380px] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">
+                        <div className="w-full h-96 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-sm text-gray-500">
                           No image available
                         </div>
                       );
@@ -424,14 +468,14 @@ export default function HomePage() {
                   </div>
                 </Link>
                 <div className="p-5 flex flex-col gap-3">
-                  <span className="text-[10px] uppercase tracking-[0.25em] text-[#4B352A] font-semibold">
+                  <span className="text-xs uppercase tracking-[0.25em] text-[#4B352A] font-medium">
                     {prod.category}
                   </span>
-                  <Link href={`/product/${normalizeSlug(prod.slug)}`} className="text-lg font-serif font-semibold text-[#1A1A1A] hover:text-[#D4AF37] transition-colors">
+                  <Link href={`/product/${normalizeSlug(prod.slug)}`} className="text-lg font-body font-medium tracking-widest uppercase text-[#1A1A1A] hover:text-[#D4AF37] transition-colors">
                     {prod.name}
                   </Link>
                   <div className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-[#1A1A1A] font-bold">₹{prod.discountPrice.toLocaleString('en-IN')}</span>
+                    <span className="text-[#1A1A1A] font-semibold">₹{prod.discountPrice.toLocaleString('en-IN')}</span>
                     {prod.price > prod.discountPrice && (
                       <span className="text-xs text-gray-400 line-through">₹{prod.price.toLocaleString('en-IN')}</span>
                     )}
@@ -443,14 +487,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
+      <section className="py-20 bg-[#F8F5F0] border-t border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Trending</span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Trending</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
               Trending Products
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
           <div
@@ -459,27 +503,27 @@ export default function HomePage() {
           >
             {trendingProducts.length > 0 ? (
               trendingProducts.map((prod) => (
-                <div key={prod.id} className="w-[320px] min-w-[320px] max-w-[320px]">
+                <div key={prod.id} className="w-full max-w-xs">
                   <ProductCard product={prod} />
                 </div>
               ))
             ) : (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-96 rounded-2xl bg-white border border-[#EDE6DA] animate-pulse" />
+                <div key={i} className="h-96 rounded-2xl bg-white border border-amber-100 animate-pulse" />
               ))
             )}
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F5F0] border-t border-[#EDE6DA]/60">
+      <section className="py-20 bg-[#F8F5F0] border-t border-amber-100/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Our Values</span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Our Values</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
               Why Choose KAELORA
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -507,12 +551,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
-                className="bg-white p-6 rounded-[2rem] border border-[#EDE6DA] text-center flex flex-col items-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white p-6 rounded-[2rem] border border-amber-100 text-center flex flex-col items-center shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mb-4">
                   <CheckCircle className="w-6 h-6 text-[#D4AF37]" />
                 </div>
-                <h3 className="text-base font-serif font-semibold text-[#1A1A1A] uppercase tracking-wide">
+                <h3 className="text-base font-body font-medium tracking-widest uppercase text-[#1A1A1A]">
                   {card.title}
                 </h3>
                 <p className="text-xs text-gray-500 leading-relaxed font-body mt-3">
@@ -524,17 +568,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-white border-t border-[#EDE6DA]/60">
+      <section className="py-20 bg-white border-t border-amber-100/60">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-10">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Social Verification</span>
-            <h2 className="text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Social Verification</span>
+            <h2 className="text-3xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
               Customer Reviews
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
-          <div className="relative bg-[#F8F5F0] rounded-[2rem] border border-[#EDE6DA] p-6 sm:p-10 shadow-sm overflow-hidden flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+
+
+
+
+
+
+
+
+          <div className="relative bg-[#F8F5F0] rounded-[2rem] border border-amber-100 p-6 sm:p-10 shadow-sm overflow-hidden flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl overflow-hidden shadow-md flex-shrink-0 bg-gray-100">
               <Image
                 src={clientReviews[currentReviewIndex].photo}
@@ -548,7 +600,7 @@ export default function HomePage() {
             <div className="flex-1 flex flex-col gap-4">
               <div className="flex items-center gap-2 text-amber-500">
                 <span className="text-base tracking-[0.08em]">★★★★★</span>
-                <span className="text-xs text-gray-500 font-body font-semibold ml-2">
+                <span className="text-xs text-gray-500 font-body font-medium ml-2">
                   ({Number(clientReviews[currentReviewIndex].rating).toFixed(1)})
                 </span>
               </div>
@@ -556,10 +608,10 @@ export default function HomePage() {
                 &quot;{clientReviews[currentReviewIndex].comment}&quot;
               </p>
               <div>
-                <h4 className="text-base font-serif font-semibold text-[#1A1A1A]">
+                <h4 className="text-base font-body font-medium tracking-widest uppercase text-[#1A1A1A]">
                   {clientReviews[currentReviewIndex].name}
                 </h4>
-                <span className="text-[10px] uppercase tracking-wider text-emerald-600 font-bold font-body">
+                <span className="text-xs uppercase tracking-wider text-emerald-600 font-normal font-body">
                   {clientReviews[currentReviewIndex].role}
                 </span>
               </div>
@@ -568,14 +620,14 @@ export default function HomePage() {
             <div className="absolute right-4 bottom-4 flex items-center gap-2">
               <button
                 onClick={handlePrevReview}
-                className="p-2 bg-white rounded-full hover:bg-gray-100 border border-[#EDE6DA] shadow-sm text-gray-600 hover:text-black transition-colors"
+                className="p-2 bg-white rounded-full hover:bg-gray-100 border border-amber-100 shadow-sm text-gray-600 hover:text-black transition-colors"
                 aria-label="Previous review"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={handleNextReview}
-                className="p-2 bg-white rounded-full hover:bg-gray-100 border border-[#EDE6DA] shadow-sm text-gray-600 hover:text-black transition-colors"
+                className="p-2 bg-white rounded-full hover:bg-gray-100 border border-amber-100 shadow-sm text-gray-600 hover:text-black transition-colors"
                 aria-label="Next review"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -585,13 +637,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 bg-white border-t border-[#EDE6DA]/60">
+      <section className="py-12 bg-white border-t border-amber-100/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6">
+          <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-4">
             <MessageSquare className="w-6 h-6 text-[#D4AF37]" />
           </div>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Assistance Desk</span>
-          <h2 className="text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+          <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Assistance Desk</span>
+          <h2 className="text-3xl font-display font-light text-[#1A1A1A] tracking-wide mt-1">
             Need Help Choosing?
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 max-w-lg mx-auto leading-relaxed mt-4 font-body">
@@ -603,7 +655,7 @@ export default function HomePage() {
               href="https://wa.me/916305517109?text=Hello%20KAELORA%20Jewellery%2C%20I'm%20interested%20in%20your%20jewellery%20collection."
               target="_blank"
               rel="noreferrer"
-              className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#25D366] hover:bg-[#1DA851] text-white font-medium text-xs uppercase tracking-wider rounded-2xl transition-transform duration-200 shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
             >
               <span>WhatsApp Us</span>
             </a>
@@ -611,23 +663,24 @@ export default function HomePage() {
               href="https://www.instagram.com/kaelora.jewellery"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-8 py-3.5 bg-white border border-[#EDE6DA] hover:border-[#D4AF37] text-[#1A1A1A] font-semibold text-xs uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 font-body"
+              className="w-full sm:w-auto px-8 py-3.5 text-white font-medium text-xs uppercase tracking-wider rounded-2xl transition-transform duration-200 hover:opacity-90 shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
+              style={{ background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)' }}
             >
-              <Instagram className="w-4 h-4 text-[#D4AF37]" />
+              <Instagram className="w-4 h-4 text-white" />
               <span>Instagram</span>
             </a>
             <a
               href="https://www.facebook.com/profile.php?id=61590032346143"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto px-8 py-3.5 bg-white border border-[#EDE6DA] hover:border-[#D4AF37] text-[#1A1A1A] font-semibold text-xs uppercase tracking-wider rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-2 font-body"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#1877F2] hover:bg-[#0C63D4] text-white font-medium text-xs uppercase tracking-wider rounded-2xl transition-transform duration-200 shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
             >
-              <Facebook className="w-4 h-4 text-[#D4AF37]" />
+              <Facebook className="w-4 h-4 text-white" />
               <span>Facebook</span>
             </a>
             <button
               onClick={() => triggerToast('Customer Care Desk: Call +91 6305517109. Email jashujash1107@gmail.com', 'info')}
-              className="w-full sm:w-auto px-8 py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] font-semibold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
+              className="w-full sm:w-auto px-8 py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] font-medium text-xs uppercase tracking-wider rounded-2xl transition-transform duration-200 shadow-md active:scale-95 flex items-center justify-center gap-2 font-body"
             >
               <span>Contact Details</span>
             </button>

@@ -25,10 +25,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (loadingAuth) return null;
 
   return (
-    <div className="min-h-screen bg-[#FFFDFC]">
-      <header className="border-b border-[#EDE6DA] bg-white">
+    <div className="min-h-dvh bg-[#FFFDFC]">
+      <header className="border-b border-amber-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/admin" className="text-lg font-serif font-bold text-[#1A1A1A]">KAELORA Admin</Link>
+          <Link href="/admin" className="text-lg font-display font-normal tracking-wide text-[#1A1A1A]">KAELORA Admin</Link>
           <nav className="flex items-center gap-3">
             <Link href="/admin" className="text-sm text-gray-600 hover:text-black">Dashboard</Link>
             <Link href="/admin/orders" className="text-sm text-gray-600 hover:text-black">Orders</Link>

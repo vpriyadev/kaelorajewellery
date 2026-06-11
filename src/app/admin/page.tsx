@@ -272,10 +272,10 @@ export default function AdminDashboardPage() {
   const categoryHasData = categoryData.some((item) => item.value > 0);
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 font-body text-[#1A1A1A]">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-8 font-body text-[#1A1A1A]">
       <div className="mb-8">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Administrative Access</div>
-        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-3 tracking-wider">Admin Dashboard</h1>
+        <div className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Administrative Access</div>
+        <h1 className="text-3xl sm:text-4xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-3 tracking-wider">Admin Dashboard</h1>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">Live store performance, order trends, product momentum, and review activity from Firestore.</p>
       </div>
 
@@ -287,8 +287,8 @@ export default function AdminDashboardPage() {
           { label: 'Total Revenue', value: formatCurrency(totals.totalRevenue) },
         ].map((card) => (
           <div key={card.label} className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)] transition hover:shadow-[0_30px_75px_rgba(16,24,40,0.08)]">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-semibold">{card.label}</div>
-            <div className="mt-5 text-3xl font-serif font-bold text-[#1A1A1A]">{card.value}</div>
+            <div className="text-xs uppercase tracking-[0.3em] text-gray-500 font-medium">{card.label}</div>
+            <div className="mt-5 text-3xl font-display font-light tracking-wide text-[#1A1A1A]">{card.value}</div>
           </div>
         ))}
       </div>
@@ -297,10 +297,10 @@ export default function AdminDashboardPage() {
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Revenue Analytics</div>
-              <div className="mt-2 text-lg font-semibold text-[#111827]">30-day revenue trend</div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Revenue Analytics</div>
+              <div className="mt-2 text-lg font-medium text-[#111827]">30-day revenue trend</div>
             </div>
-            <div className="rounded-2xl bg-[#F8F4EA] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">Live</div>
+            <div className="rounded-2xl bg-[#F8F4EA] px-3 py-1 text-xs font-medium text-[#7C5F2C]">Live</div>
           </div>
           {revenueHasData ? (
             <div className="h-[200px] sm:h-[300px] md:h-[320px]">
@@ -329,8 +329,8 @@ export default function AdminDashboardPage() {
 
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="mb-5">
-            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Orders Analytics</div>
-            <div className="mt-2 text-lg font-semibold text-[#111827]">Daily order volume</div>
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Orders Analytics</div>
+            <div className="mt-2 text-lg font-medium text-[#111827]">Daily order volume</div>
           </div>
           {ordersHasData ? (
             <div className="h-[200px] sm:h-[300px] md:h-[320px]">
@@ -356,8 +356,8 @@ export default function AdminDashboardPage() {
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Top Selling Products</div>
-              <div className="mt-2 text-lg font-semibold text-[#111827]">Generated from order history</div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Top Selling Products</div>
+              <div className="mt-2 text-lg font-medium text-[#111827]">Generated from order history</div>
             </div>
           </div>
           {topProducts.length === 0 ? (
@@ -370,10 +370,10 @@ export default function AdminDashboardPage() {
                 <div key={item.id} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-[#111827]">{item.name}</div>
+                      <div className="text-sm font-medium text-[#111827]">{item.name}</div>
                       <div className="text-xs uppercase tracking-[0.25em] text-gray-400">Sold quantity</div>
                     </div>
-                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">#{index + 1}</div>
+                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-medium text-[#7C5F2C]">#{index + 1}</div>
                   </div>
                   <div className="mt-3 flex items-center justify-between text-sm text-gray-600">
                     <span>{item.quantity} units</span>
@@ -388,8 +388,8 @@ export default function AdminDashboardPage() {
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Sales By Location</div>
-              <div className="mt-2 text-lg font-semibold text-[#111827]">Order volume by shipping region</div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Sales By Location</div>
+              <div className="mt-2 text-lg font-medium text-[#111827]">Order volume by shipping region</div>
             </div>
           </div>
           {locationHasData ? (
@@ -398,10 +398,10 @@ export default function AdminDashboardPage() {
                 <div key={location.location} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <div className="text-sm font-semibold text-[#111827]">{location.location}</div>
+                      <div className="text-sm font-medium text-[#111827]">{location.location}</div>
                       <div className="text-xs text-gray-500">{location.orders} orders</div>
                     </div>
-                    <div className="text-sm font-semibold text-[#1F2937]">{formatCurrency(location.revenue)}</div>
+                    <div className="text-sm font-medium text-[#1F2937]">{formatCurrency(location.revenue)}</div>
                   </div>
                 </div>
               ))}
@@ -418,8 +418,8 @@ export default function AdminDashboardPage() {
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Category Distribution</div>
-              <div className="mt-2 text-lg font-semibold text-[#111827]">Products by category</div>
+              <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Category Distribution</div>
+              <div className="mt-2 text-lg font-medium text-[#111827]">Products by category</div>
             </div>
           </div>
           {categoryHasData ? (
@@ -445,8 +445,8 @@ export default function AdminDashboardPage() {
 
         <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
           <div className="mb-5">
-            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Recent Reviews</div>
-            <div className="mt-2 text-lg font-semibold text-[#111827]">Latest customer impressions</div>
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Recent Reviews</div>
+            <div className="mt-2 text-lg font-medium text-[#111827]">Latest customer impressions</div>
           </div>
           {recentReviews.length === 0 ? (
             <div className="flex min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-gray-300 bg-[#F8FAFC] text-center text-sm text-gray-500">
@@ -458,10 +458,10 @@ export default function AdminDashboardPage() {
                 <div key={review.id} className="rounded-3xl border border-[#E6DDD0] p-4 hover:border-[#D4AF37] transition">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-[#111827]">{review.userName || review.userId || 'Anonymous'}</div>
+                      <div className="text-sm font-medium text-[#111827]">{review.userName || review.userId || 'Anonymous'}</div>
                       <div className="text-xs text-gray-500">Product: {review.productId || 'Unknown'}</div>
                     </div>
-                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-semibold text-[#7C5F2C]">{review.rating || '—'} ★</div>
+                    <div className="rounded-2xl bg-[#F8F1DD] px-3 py-1 text-xs font-medium text-[#7C5F2C]">{review.rating || '—'} ★</div>
                   </div>
                   <p className="mt-3 text-sm text-gray-600 line-clamp-3">{review.comment || 'No comment provided.'}</p>
                   <div className="mt-4 text-xs text-gray-400">{(safeDate(review.createdAt || review.date || review.created_at) || new Date()).toLocaleDateString()}</div>
@@ -475,10 +475,10 @@ export default function AdminDashboardPage() {
       <div className="rounded-[28px] border border-[#E6DDD0] bg-white p-6 shadow-[0_25px_50px_rgba(16,24,40,0.04)]">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
-            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-semibold">Recent Orders</div>
-            <div className="mt-2 text-lg font-semibold text-[#111827]">Latest orders from Firestore</div>
+            <div className="text-xs uppercase tracking-[0.35em] text-gray-500 font-medium">Recent Orders</div>
+            <div className="mt-2 text-lg font-medium text-[#111827]">Latest orders from Firestore</div>
           </div>
-          <button className="rounded-full bg-[#F3E7C9] px-4 py-2 text-xs font-semibold text-[#7C5F2C] hover:bg-[#E7D69A] transition">
+          <button className="rounded-full bg-[#F3E7C9] px-4 py-2 text-xs font-medium text-[#7C5F2C] hover:bg-[#E7D69A] transition">
             View all orders
           </button>
         </div>
@@ -489,7 +489,7 @@ export default function AdminDashboardPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-600">
-              <thead className="border-b border-gray-200 text-xs uppercase tracking-[0.25em] text-gray-500">
+              <thead className="border-b border-amber-100 text-xs uppercase tracking-[0.25em] text-gray-500">
                 <tr>
                   <th className="px-4 py-3">Order</th>
                   <th className="px-4 py-3">Customer</th>
@@ -506,7 +506,7 @@ export default function AdminDashboardPage() {
                     <td className="px-4 py-4 text-gray-700">{formatCurrency(Number(order.totalAmount || order.totalPrice || order.amount || 0))}</td>
                     <td className="px-4 py-4 text-gray-700">{getLocationLabel(order)}</td>
                     <td className="px-4 py-4">
-                      <span className="inline-flex rounded-full bg-[#F8F4EA] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7C5F2C]">
+                      <span className="inline-flex rounded-full bg-[#F8F4EA] px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-[#7C5F2C]">
                         {order.status || order.orderStatus || 'Pending'}
                       </span>
                     </td>

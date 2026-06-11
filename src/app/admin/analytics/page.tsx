@@ -151,7 +151,7 @@ export default function AdminAnalyticsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-semibold mb-2">Analytics Dashboard</h2>
+          <h2 className="text-2xl font-display font-light tracking-wide mb-2">Analytics Dashboard</h2>
           <p className="text-sm text-gray-600">Enterprise analytics, reports and performance metrics.</p>
         </div>
         <button
@@ -166,124 +166,124 @@ export default function AdminAnalyticsPage() {
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Revenue</p>
             <DollarSign className="text-burgundy" size={20} />
           </div>
-          <p className="text-3xl font-bold">₹{totalRevenue.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-semibold">₹{totalRevenue.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-400 mt-2">All time</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Today's Revenue</p>
             <TrendingUp className="text-green-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">₹{todaysRevenue.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-semibold">₹{todaysRevenue.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-400 mt-2">{new Date().toLocaleDateString('en-IN')}</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Monthly Revenue</p>
             <DollarSign className="text-blue-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">₹{monthlyRevenue.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-semibold">₹{monthlyRevenue.toLocaleString('en-IN')}</p>
           <p className="text-xs text-gray-400 mt-2">This month</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Orders</p>
             <ShoppingCart className="text-amber-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{totalOrders}</p>
+          <p className="text-3xl font-normal">{totalOrders}</p>
           <p className="text-xs text-gray-400 mt-2">Orders placed</p>
         </div>
       </div>
 
       {/* Order Status Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Processing Orders</p>
             <Package className="text-yellow-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{statusCounts['processing'] || 0}</p>
+          <p className="text-3xl font-normal">{statusCounts['processing'] || 0}</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Delivered Orders</p>
             <ShoppingCart className="text-green-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{statusCounts['delivered'] || 0}</p>
+          <p className="text-3xl font-normal">{statusCounts['delivered'] || 0}</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Cancelled Orders</p>
             <ShoppingCart className="text-red-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{statusCounts['cancelled'] || 0}</p>
+          <p className="text-3xl font-normal">{statusCounts['cancelled'] || 0}</p>
         </div>
       </div>
 
       {/* Business Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Customers</p>
             <Users className="text-blue-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{users.length}</p>
+          <p className="text-3xl font-normal">{users.length}</p>
           <p className="text-xs text-green-600 mt-2">+{newUsersThisMonth} this month</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Products</p>
             <Package className="text-purple-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{products.length}</p>
+          <p className="text-3xl font-normal">{products.length}</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Total Reviews</p>
             <MessageSquare className="text-indigo-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">{reviews.length}</p>
+          <p className="text-3xl font-normal">{reviews.length}</p>
           <p className="text-xs text-green-600 mt-2">{approvedReviews} approved</p>
         </div>
 
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+        <div className="bg-white border border-amber-100 rounded-3xl p-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-gray-600">Yearly Revenue</p>
             <TrendingUp className="text-emerald-600" size={20} />
           </div>
-          <p className="text-3xl font-bold">₹{yearlyRevenue.toLocaleString('en-IN')}</p>
+          <p className="text-3xl font-semibold">₹{yearlyRevenue.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
       {/* Top Selling Products */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6 mb-8">
-        <h3 className="text-lg font-semibold mb-4">Top Selling Products</h3>
+      <div className="bg-white border border-amber-100 rounded-3xl p-6 mb-8">
+        <h3 className="text-lg font-medium mb-4">Top Selling Products</h3>
         {topSellingProducts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-[#EDE6DA]">
+              <thead className="bg-gray-50 border-b border-amber-100">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Product</th>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Quantity Sold</th>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Revenue</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Product</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Quantity Sold</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Revenue</th>
                 </tr>
               </thead>
               <tbody>
                 {topSellingProducts.map((p, idx) => (
-                  <tr key={idx} className="border-b border-[#EDE6DA] hover:bg-gray-50">
-                    <td className="px-6 py-3 font-semibold">{p.name}</td>
+                  <tr key={idx} className="border-b border-amber-100 hover:bg-gray-50">
+                    <td className="px-6 py-3 font-medium">{p.name}</td>
                     <td className="px-6 py-3">{p.quantity}</td>
                     <td className="px-6 py-3 font-semibold">₹{p.revenue.toLocaleString('en-IN')}</td>
                   </tr>
@@ -297,12 +297,12 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Monthly Revenue */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6 mb-8">
+      <div className="bg-white border border-amber-100 rounded-3xl p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Monthly Revenue Breakdown</h3>
+          <h3 className="text-lg font-medium">Monthly Revenue Breakdown</h3>
           <button
             onClick={handleExportRevenue}
-            className="flex items-center gap-2 px-4 py-2 border border-[#EDE6DA] rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 border border-amber-100 rounded-lg hover:bg-gray-50"
           >
             <Download size={16} />
             Export CSV
@@ -331,12 +331,12 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+      <div className="bg-white border border-amber-100 rounded-3xl p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Recent Orders</h3>
+          <h3 className="text-lg font-medium">Recent Orders</h3>
           <button
             onClick={handleExportOrders}
-            className="flex items-center gap-2 px-4 py-2 border border-[#EDE6DA] rounded-lg hover:bg-gray-50"
+            className="flex items-center gap-2 px-4 py-2 border border-amber-100 rounded-lg hover:bg-gray-50"
           >
             <Download size={16} />
             Export CSV
@@ -345,17 +345,17 @@ export default function AdminAnalyticsPage() {
         {parsedOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-[#EDE6DA]">
+              <thead className="bg-gray-50 border-b border-amber-100">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Order ID</th>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Amount</th>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                  <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Order ID</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Amount</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Status</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-700">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {parsedOrders.slice(0, 10).map(order => (
-                  <tr key={order.id} className="border-b border-[#EDE6DA] hover:bg-gray-50">
+                  <tr key={order.id} className="border-b border-amber-100 hover:bg-gray-50">
                     <td className="px-6 py-3 font-mono text-xs">{order.id?.substring(0, 8)}</td>
                     <td className="px-6 py-3 font-semibold">₹{order.totalAmount.toLocaleString('en-IN')}</td>
                     <td className="px-6 py-3">

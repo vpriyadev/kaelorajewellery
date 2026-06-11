@@ -67,7 +67,7 @@ export default function AdminOrdersPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-semibold mb-2">Orders Management</h2>
+          <h2 className="text-2xl font-display font-light tracking-wide mb-2">Orders Management</h2>
           <p className="text-sm text-gray-600">View and manage orders placed on the platform.</p>
         </div>
         <button
@@ -97,7 +97,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl overflow-hidden">
+      <div className="bg-white border border-amber-100 rounded-3xl overflow-hidden">
         {loading && orders.length === 0 ? (
           <div className="p-6 text-center text-gray-500">Loading orders...</div>
         ) : filteredOrders.length === 0 ? (
@@ -105,14 +105,14 @@ export default function AdminOrdersPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-[#EDE6DA]">
+              <thead className="bg-gray-50 border-b border-amber-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Order ID</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Customer</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Amount</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Order ID</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Amount</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Date</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,7 +120,7 @@ export default function AdminOrdersPage() {
                   const status = order.status || order.orderStatus || 'processing';
                   const orderId = order.id;
                   return (
-                    <tr key={orderId} className="border-b border-[#EDE6DA] hover:bg-gray-50">
+                    <tr key={orderId} className="border-b border-amber-100 hover:bg-gray-50">
                       <td className="px-6 py-3 text-sm font-mono text-gray-700">{orderId?.substring(0, 8)}</td>
                       <td className="px-6 py-3 text-sm text-gray-700">
                         {(order as any).customerName || order.userId || 'Guest'}
@@ -129,7 +129,7 @@ export default function AdminOrdersPage() {
                         ₹{Number(order.totalAmount || (order as any).amount || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-3 text-sm">
-                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ${statusColors[status] || statusColors.processing}`}>
+                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusColors[status] || statusColors.processing}`}>
                           {statusIcons[status]}
                           {status}
                         </span>
@@ -157,9 +157,9 @@ export default function AdminOrdersPage() {
       {/* Order Details Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-min-h-dvh overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Order Details</h3>
+              <h3 className="text-xl font-medium">Order Details</h3>
               <button
                 onClick={() => setSelectedOrder(null)}
                 className="text-gray-500 hover:text-gray-700"
@@ -172,28 +172,28 @@ export default function AdminOrdersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Order ID</p>
-                  <p className="text-sm font-mono font-semibold">{selectedOrder.id}</p>
+                  <p className="text-sm font-mono font-medium">{selectedOrder.id}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Date</p>
-                  <p className="text-sm font-semibold">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm font-medium">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Customer</p>
-                  <p className="text-sm font-semibold">{(selectedOrder as any).customerName || selectedOrder.userId || 'Guest'}</p>
+                  <p className="text-sm font-medium">{(selectedOrder as any).customerName || selectedOrder.userId || 'Guest'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Phone</p>
-                  <p className="text-sm font-semibold">{(selectedOrder as any).phone || 'N/A'}</p>
+                  <p className="text-sm font-medium">{(selectedOrder as any).phone || 'N/A'}</p>
                 </div>
               </div>
 
               <div>
                 <p className="text-sm text-gray-600">Address</p>
-                <p className="text-sm font-semibold">{(selectedOrder as any).address || 'N/A'}</p>
+                <p className="text-sm font-medium">{(selectedOrder as any).address || 'N/A'}</p>
               </div>
 
               <div className="border-t pt-4">
@@ -209,7 +209,7 @@ export default function AdminOrdersPage() {
               <div className="border-t pt-4 grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Total Amount</p>
-                  <p className="text-lg font-bold">₹{Number(selectedOrder.totalAmount || (selectedOrder as any).amount || 0).toFixed(2)}</p>
+                  <p className="text-lg font-semibold">₹{Number(selectedOrder.totalAmount || (selectedOrder as any).amount || 0).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-2">Current Status</p>
@@ -219,7 +219,7 @@ export default function AdminOrdersPage() {
                       handleStatusChange(selectedOrder.id, e.target.value);
                       setSelectedOrder(null);
                     }}
-                    className="w-full px-3 py-2 border border-[#EDE6DA] rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-amber-100 rounded-lg text-sm"
                   >
                     <option value="processing">Processing</option>
                     <option value="shipped">Shipped</option>
@@ -241,7 +241,7 @@ export default function AdminOrdersPage() {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setSelectedOrder(null)}
-                  className="px-4 py-2 border border-[#EDE6DA] rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 border border-amber-100 rounded-lg hover:bg-gray-50"
                 >
                   Close
                 </button>

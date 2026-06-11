@@ -8,23 +8,23 @@ import Image from 'next/image';
 
 export default function AboutPage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 font-body text-[#1A1A1A]">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 font-body text-[#1A1A1A]">
       
       {/* Title */}
       <div className="text-center mb-16">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Our Story</span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+        <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Our Story</span>
+        <h1 className="text-3xl sm:text-4xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-1 tracking-wider">
           About KAELORA
         </h1>
-        <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+        <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
       </div>
 
       {/* Main split */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20 bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-10 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20 bg-white border border-amber-100 rounded-3xl p-6 sm:p-10 shadow-sm">
         {/* Left story content */}
         <div className="flex flex-col gap-5">
-          <span className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-bold">Timeless Splendor</span>
-          <h2 className="text-2xl sm:text-3xl font-serif font-semibold uppercase tracking-wider text-[#1A1A1A] leading-tight">
+          <span className="text-xs uppercase tracking-widest text-[#D4AF37] font-normal">Timeless Splendor</span>
+          <h2 className="text-2xl sm:text-3xl font-display font-light tracking-wide uppercase tracking-wider text-[#1A1A1A] leading-tight">
             Elegance Made <br />
             Completely Accessible
           </h2>
@@ -66,11 +66,11 @@ export default function AboutPage() {
 
       {/* Grid of Values */}
       <div className="text-center mb-10">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Exquisite Curation</span>
-        <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+        <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Exquisite Curation</span>
+        <h2 className="text-2xl sm:text-3xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-1 tracking-wider">
           Our Brand Pillars
         </h2>
-        <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+        <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
@@ -100,13 +100,13 @@ export default function AboutPage() {
           return (
             <div
               key={v.title}
-              className="bg-white p-6 rounded-2xl border border-[#EDE6DA] text-center flex flex-col items-center gap-3.5 hover:shadow-md transition-shadow shadow-sm"
+              className="bg-white p-6 rounded-2xl border border-amber-100 text-center flex flex-col items-center gap-3.5 hover:shadow-md transition-shadow shadow-sm"
             >
               <div className="w-10 h-10 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center text-[#D4AF37]">
                 <Icon className="w-5 h-5" />
               </div>
-              <h4 className="text-xs uppercase tracking-widest font-bold text-[#1A1A1A] font-serif">{v.title}</h4>
-              <p className="text-[11px] text-gray-400 font-medium leading-relaxed font-body">{v.desc}</p>
+              <h4 className="text-xs uppercase tracking-widest font-medium text-[#1A1A1A] font-body font-medium">{v.title}</h4>
+              <p className="text-xs text-gray-400 font-medium leading-relaxed font-body">{v.desc}</p>
             </div>
           );
         })}
@@ -116,15 +116,15 @@ export default function AboutPage() {
       <div className="bg-[#1A1A1A] border border-[#D4AF37]/30 rounded-3xl p-8 sm:p-12 text-[#EDE6DA] text-center max-w-4xl mx-auto flex flex-col items-center gap-4 relative overflow-hidden shadow-xl">
         <div className="absolute top-0 bottom-0 left-0 right-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.06)_0%,transparent_70%)] animate-pulse" />
         
-        <span className="text-[9px] uppercase tracking-[0.25em] text-[#D4AF37] font-semibold relative z-10">Luxury Collections</span>
-        <h3 className="text-2xl font-serif uppercase tracking-wider relative z-10">Discover The Collection</h3>
-        <p className="text-xs text-gray-300 max-w-md mx-auto leading-relaxed font-body relative z-10">
+        <span className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-medium relative z-10">Luxury Collections</span>
+        <h3 className="text-2xl font-body font-medium uppercase tracking-wider relative z-10">Discover The Collection</h3>
+        <p className="text-xs text-neutral-500 max-w-md mx-auto leading-relaxed font-body relative z-10">
           Elevate your daily ensembles or secure the perfect complimentary gift lookbook for someone special. Standard delivery is free above ₹400.
         </p>
 
         <Link
           href="/shop"
-          className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#c49e2f] text-[#1A1A1A] text-xs font-semibold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95 mt-4 relative z-10"
+          className="px-8 py-3.5 bg-[#D4AF37] hover:bg-[#c49e2f] text-[#1A1A1A] text-xs font-medium uppercase tracking-widest rounded-xl transition-transform duration-200 shadow-md active:scale-95 mt-4 relative z-10"
         >
           Shop Collection Now
         </Link>

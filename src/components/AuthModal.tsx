@@ -112,7 +112,7 @@ export const AuthModal: React.FC = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className="relative max-w-md w-full bg-[#F8F5F0] rounded-2xl border border-[#EDE6DA] shadow-2xl p-6 sm:p-8 overflow-hidden z-10"
+          className="relative max-w-md w-full bg-[#F8F5F0] rounded-2xl border border-amber-100 shadow-2xl p-6 sm:p-8 overflow-hidden z-10"
         >
           {/* Accent golden bar */}
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#D4AF37]" />
@@ -127,7 +127,7 @@ export const AuthModal: React.FC = () => {
 
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-serif font-semibold text-[#1A1A1A] tracking-wider uppercase mb-1">
+            <h2 className="text-2xl font-display font-light tracking-wide text-[#1A1A1A] tracking-wider uppercase mb-1">
               {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
             </h2>
             <p className="text-xs uppercase tracking-widest text-[#4B352A] font-medium italic">
@@ -151,7 +151,7 @@ export const AuthModal: React.FC = () => {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {mode === 'signup' && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold tracking-wider text-[#4B352A] uppercase">Full Name</label>
+                <label className="text-xs font-medium tracking-wider text-[#4B352A] uppercase">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -160,14 +160,14 @@ export const AuthModal: React.FC = () => {
                     placeholder="Enter your name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#EDE6DA] bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-all"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-amber-100 bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] transition-colors duration-200"
                   />
                 </div>
               </div>
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold tracking-wider text-[#4B352A] uppercase">Email Address</label>
+              <label className="text-xs font-medium tracking-wider text-[#4B352A] uppercase">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -190,22 +190,22 @@ export const AuthModal: React.FC = () => {
                     }
                   }}
                   onBlur={() => setEmailTouched(true)}
-                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-all ${
+                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-colors duration-200 ${
                     emailTouched && emailError
                       ? 'border-red-300 focus:border-red-500'
-                      : 'border-[#EDE6DA] focus:border-[#D4AF37]'
+                      : 'border-amber-100 focus:border-[#D4AF37]'
                   }`}
                 />
               </div>
               {emailTouched && emailError && (
-                <p className="text-[11px] text-red-700 mt-1">{emailError}</p>
+                <p className="text-xs text-red-700 mt-1">{emailError}</p>
               )}
             </div>
 
             {mode !== 'forgot' && (
               <div className="flex flex-col gap-1.5">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold tracking-wider text-[#4B352A] uppercase">Password</label>
+                  <label className="text-xs font-medium tracking-wider text-[#4B352A] uppercase">Password</label>
                   {mode === 'signin' && (
                     <button
                       type="button"
@@ -236,16 +236,16 @@ export const AuthModal: React.FC = () => {
                       }
                     }}
                     onBlur={() => setPasswordTouched(true)}
-                    className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-all ${
+                    className={`w-full pl-9 pr-4 py-2.5 rounded-xl border bg-white text-sm text-[#1A1A1A] placeholder-gray-400 focus:outline-none transition-colors duration-200 ${
                       passwordTouched && passwordError
                         ? 'border-red-300 focus:border-red-500'
-                        : 'border-[#EDE6DA] focus:border-[#D4AF37]'
+                        : 'border-amber-100 focus:border-[#D4AF37]'
                     }`}
                   />
                 </div>
-                <p className="text-[11px] text-gray-500">Minimum 6 characters</p>
+                <p className="text-xs text-gray-500">Minimum 6 characters</p>
                 {passwordTouched && passwordError && (
-                  <p className="text-[11px] text-red-700 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-red-700 mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5" />
                     {passwordError}
                   </p>
@@ -257,10 +257,10 @@ export const AuthModal: React.FC = () => {
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-2 w-full py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] font-semibold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-1 group relative overflow-hidden disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] font-medium text-sm rounded-xl transition-transform duration-200 shadow-md flex items-center justify-center gap-1 group relative overflow-hidden disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-[#EDE6DA]/40 border-t-[#EDE6DA] rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-amber-100/40 border-t-[#EDE6DA] rounded-full animate-spin" />
               ) : (
                 <>
                   <span>
@@ -276,15 +276,15 @@ export const AuthModal: React.FC = () => {
           {mode !== 'forgot' && (
             <div className="mt-5 flex flex-col gap-4">
               <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-[#EDE6DA]"></div>
+                <div className="flex-grow border-t border-amber-100"></div>
                 <span className="flex-shrink mx-4 text-xs text-gray-400 uppercase tracking-widest">Or Continue With</span>
-                <div className="flex-grow border-t border-[#EDE6DA]"></div>
+                <div className="flex-grow border-t border-amber-100"></div>
               </div>
 
               <button
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full py-3 bg-white hover:bg-gray-50 active:scale-[0.98] border border-[#EDE6DA] text-[#1A1A1A] font-semibold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+                className="w-full py-3 bg-white hover:bg-gray-50 active:scale-[0.98] border border-amber-100 text-[#1A1A1A] font-medium text-sm rounded-xl transition-transform duration-200 shadow-sm flex items-center justify-center gap-2"
               >
                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                   <path
@@ -323,7 +323,7 @@ export const AuthModal: React.FC = () => {
                     setEmailTouched(false);
                     setPasswordTouched(false);
                   }}
-                  className="text-[#D4AF37] font-semibold hover:underline"
+                  className="text-[#D4AF37] font-medium hover:underline"
                 >
                   Sign Up
                 </button>
@@ -340,7 +340,7 @@ export const AuthModal: React.FC = () => {
                     setEmailTouched(false);
                     setPasswordTouched(false);
                   }}
-                  className="text-[#D4AF37] font-semibold hover:underline"
+                  className="text-[#D4AF37] font-medium hover:underline"
                 >
                   Sign In
                 </button>
@@ -357,7 +357,7 @@ export const AuthModal: React.FC = () => {
                     setEmailTouched(false);
                     setPasswordTouched(false);
                   }}
-                  className="text-[#D4AF37] font-semibold hover:underline"
+                  className="text-[#D4AF37] font-medium hover:underline"
                 >
                   Sign In
                 </button>

@@ -30,11 +30,27 @@ export const Intro: React.FC = () => {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.06)_0%,transparent_70%)] animate-pulse pointer-events-none" />
 
           {/* Floating Gold Particles */}
-          <div className="absolute inset-0 opacity-40 pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-[#D4AF37]/40 rounded-full blur-[1px] animate-bounce" style={{ animationDuration: '6s' }} />
-            <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-[#D4AF37]/30 rounded-full blur-[2px] animate-bounce" style={{ animationDuration: '8s' }} />
-            <div className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-[#D4AF37]/50 rounded-full blur-[0.5px] animate-bounce" style={{ animationDuration: '5s' }} />
-            <div className="absolute bottom-1/4 right-1/3 w-2.5 h-2.5 bg-[#D4AF37]/20 rounded-full blur-[3px] animate-bounce" style={{ animationDuration: '10s' }} />
+          <div className="absolute inset-0 pointer-events-none">
+            <motion.div
+              animate={{ opacity: [0.2, 0.6, 0.2], y: [0, -10, 0] }}
+              transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-[#D4AF37] rounded-full will-change-transform" 
+            />
+            <motion.div
+              animate={{ opacity: [0.1, 0.5, 0.1], y: [0, -15, 0] }}
+              transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute top-1/3 right-1/4 w-2 h-2 bg-[#D4AF37] rounded-full will-change-transform" 
+            />
+            <motion.div
+              animate={{ opacity: [0.3, 0.7, 0.3], y: [0, -8, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-[#D4AF37] rounded-full will-change-transform" 
+            />
+            <motion.div
+              animate={{ opacity: [0.1, 0.4, 0.1], y: [0, -12, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute bottom-1/4 right-1/3 w-2.5 h-2.5 bg-[#D4AF37] rounded-full will-change-transform" 
+            />
           </div>
 
           <div className="relative flex flex-col items-center max-w-lg px-6 text-center">
@@ -79,7 +95,7 @@ export const Intro: React.FC = () => {
               <img
                 src="/images/logo-burgundy.jpg"
                 alt="KAELORA Jewellery"
-                className="relative block w-28 h-28 sm:w-48 sm:h-48 md:w-[220px] md:h-[220px] object-cover rounded-full"
+                className="relative block aspect-square w-full object-cover rounded-full"
                 style={{ position: 'relative', zIndex: 10 }}
               />
             </motion.div>
@@ -88,7 +104,7 @@ export const Intro: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.4, delay: 1.0 }}
-              className="text-base sm:text-lg font-serif uppercase tracking-[0.3em] text-[#4B352A] font-semibold"
+              className="text-base sm:text-lg font-body font-medium uppercase tracking-[0.3em] text-[#4B352A] font-medium"
             >
               Elegance • Trust • Timeless
             </motion.p>
@@ -97,13 +113,13 @@ export const Intro: React.FC = () => {
               initial={{ width: 0 }}
               animate={{ width: 96 }}
               transition={{ duration: 1.2, delay: 1.6 }}
-              className="h-[1px] bg-[#D4AF37] my-6 mx-auto"
+              className="h-px bg-[#D4AF37] my-6 mx-auto"
             />
           </div>
 
           {/* Cinematic progress bar */}
           <div className="absolute bottom-16 left-0 right-0 flex justify-center px-8">
-            <div className="w-48 h-[1px] bg-gray-200/80 rounded-full overflow-hidden">
+            <div className="w-48 h-px bg-gray-200/80 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: '100%' }}

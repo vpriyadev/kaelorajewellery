@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { serviceDb, Review } from '../../../lib/firebase';
+import Image from 'next/image';
 import { Check, X, Star } from 'lucide-react';
 
 export default function AdminReviewsPage() {
@@ -79,7 +80,7 @@ export default function AdminReviewsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-semibold mb-2">Reviews Management</h2>
+          <h2 className="text-2xl font-display font-light tracking-wide mb-2">Reviews Management</h2>
           <p className="text-sm text-gray-600">Moderate and feature customer reviews.</p>
         </div>
         <button
@@ -118,17 +119,17 @@ export default function AdminReviewsPage() {
           <div className="p-6 text-center text-gray-500 bg-white rounded-3xl">No reviews found.</div>
         ) : (
           filteredReviews.map(review => (
-            <div key={review.id} className="bg-white border border-[#EDE6DA] rounded-3xl p-6">
+            <div key={review.id} className="bg-white border border-amber-100 rounded-3xl p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900">{review.userName}</h3>
+                    <h3 className="font-medium text-gray-900">{review.userName}</h3>
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
                           size={16}
-                          className={i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                          className={i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-neutral-500'}
                         />
                       ))}
                     </div>
@@ -137,16 +138,16 @@ export default function AdminReviewsPage() {
                 </div>
                 <div className="text-right">
                   {review.approved ? (
-                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                    <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                       Approved
                     </span>
                   ) : (
-                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                    <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
                       Pending
                     </span>
                   )}
                   {review.featured && (
-                    <div className="mt-2 inline-block px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
+                    <div className="mt-2 inline-block px-3 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
                       Featured
                     </div>
                   )}
@@ -156,7 +157,7 @@ export default function AdminReviewsPage() {
               <p className="text-gray-700 mb-4">{review.comment}</p>
 
               {review.image && (
-                <img src={review.image} alt="Review" className="w-20 h-20 rounded-lg mb-4 object-cover" />
+                <Image src={review.image} alt="Review" width={80} height={80} className="w-20 h-20 rounded-lg mb-4 object-cover" />
               )}
 
               <p className="text-xs text-gray-500 mb-4">

@@ -87,7 +87,7 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-3">
         <div className="w-8 h-8 border-2 border-[#D4AF37]/40 border-t-[#D4AF37] rounded-full animate-spin" />
-        <span className="text-xs uppercase tracking-widest text-gray-500 font-semibold font-body">Opening Jewel Box...</span>
+        <span className="text-xs uppercase tracking-widest text-gray-500 font-medium font-body">Opening Jewel Box...</span>
       </div>
     );
   }
@@ -96,13 +96,13 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
     return (
       <div className="text-center py-32 font-body max-w-md mx-auto px-6">
         <AlertCircle className="w-12 h-12 text-[#D4AF37] mx-auto mb-4" />
-        <h2 className="text-xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wider">Product Not Found</h2>
+        <h2 className="text-xl font-display font-normal tracking-wide text-[#1A1A1A] uppercase tracking-wider">Product Not Found</h2>
         <p className="text-xs text-gray-400 leading-relaxed mt-2">
           The requested article cannot be located. It may have been retired or sold out completely.
         </p>
         <button
           onClick={() => router.push('/shop')}
-          className="mt-6 px-6 py-2.5 bg-[#1A1A1A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl shadow-md"
+          className="mt-6 px-6 py-2.5 bg-[#1A1A1A] text-white text-xs font-medium uppercase tracking-wider rounded-xl shadow-md"
         >
           Return to Shop
         </button>
@@ -215,7 +215,7 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
       {/* ----------------------------------------------------
           TOP: MAIN PRODUCT SPLIT CARD
           ---------------------------------------------------- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-10 shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start bg-white border border-amber-100 rounded-3xl p-6 sm:p-10 shadow-sm">
         
         {/* LEFT COLUMN: MULTI-IMAGE VIEWER WITH ZOOM */}
         <div className="flex flex-col gap-4 w-full">
@@ -223,22 +223,31 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
           <div
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="relative aspect-square rounded-2xl overflow-hidden border border-[#EDE6DA] cursor-zoom-in bg-gray-50"
+            className="relative aspect-square rounded-2xl overflow-hidden border border-amber-100 cursor-zoom-in bg-gray-50"
           >
-            <Image
-              src={(typeof product.images[activeImageIndex] === 'string' ? product.images[activeImageIndex] : product.images[activeImageIndex]?.url) || '/images/logo-burgundy.jpg'}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
-              className="w-full h-full object-cover transition-transform duration-100"
-              style={{
-                transform: `scale(${zoomScale})`,
-                transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
-              }}
-            />
+            {(() => {
+              const raw = (typeof product.images[activeImageIndex] === 'string' ? product.images[activeImageIndex] : product.images[activeImageIndex]?.url) || '/images/logo-burgundy.jpg';
+              const optimizedUrl = raw?.includes('cloudinary.com') 
+                ? raw.replace('/upload/', '/upload/f_auto,q_auto,w_1200/') 
+                : raw;
+              
+              return (
+                <Image
+                  src={optimizedUrl}
+                  alt={product.name}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 40vw"
+                  className="w-full h-full object-cover transition-transform duration-100"
+                  style={{
+                    transform: `scale(${zoomScale})`,
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`
+                  }}
+                />
+              );
+            })()}
             {discountPercent > 0 && (
-              <span className="absolute top-4 left-4 bg-[#D4AF37] text-white text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+              <span className="absolute top-4 left-4 bg-[#D4AF37] text-white text-xs font-medium uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
                 {discountPercent}% OFF
               </span>
             )}
@@ -251,8 +260,8 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                 <button
                   key={idx}
                   onClick={() => setActiveImageIndex(idx)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 bg-gray-50 transition-all relative ${
-                    activeImageIndex === idx ? 'border-[#D4AF37] scale-95 shadow-md' : 'border-[#EDE6DA] hover:border-gray-300'
+                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 flex-shrink-0 bg-gray-50 transition-colors duration-200 relative ${
+                    activeImageIndex === idx ? 'border-[#D4AF37] scale-95 shadow-md' : 'border-amber-100 hover:border-gray-300'
                   }`}
                 >
                     <Image 
@@ -273,10 +282,10 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
         <div className="flex flex-col gap-5 w-full text-[#1A1A1A]">
           {/* Header titles */}
           <div>
-            <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] font-bold">
+            <span className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-normal">
               {product.category} collection
             </span>
-            <h1 className="text-2xl sm:text-3xl font-serif font-semibold uppercase tracking-wider mt-1.5 leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-display font-light tracking-wide uppercase tracking-wider mt-1.5 leading-tight">
               {product.name}
             </h1>
             
@@ -286,12 +295,12 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                 <>
                   <div className="flex items-center gap-0.5 text-amber-500">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < Math.round(product.rating || 0) ? 'text-sm' : 'text-sm text-gray-300'}>★</span>
+                      <span key={i} className={i < Math.round(product.rating || 0) ? 'text-sm' : 'text-sm text-neutral-500'}>★</span>
                     ))}
-                    <span className="font-bold text-gray-700 ml-1">{(product.rating || 0).toFixed(1)}</span>
+                    <span className="font-normal text-gray-700 ml-1">{(product.rating || 0).toFixed(1)}</span>
                   </div>
                   <span className="text-gray-400">|</span>
-                  <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
+                  <span className="text-gray-500 font-medium uppercase tracking-wider text-xs">
                     {product.reviewCount} Reviews
                   </span>
                 </>
@@ -299,11 +308,11 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                 <>
                   <div className="flex items-center gap-0.5 text-amber-500">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className="text-sm text-gray-300">☆</span>
+                      <span key={i} className="text-sm text-neutral-500">☆</span>
                     ))}
                   </div>
                   <span className="text-gray-400">|</span>
-                  <span className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
+                  <span className="text-gray-500 font-medium uppercase tracking-wider text-xs">
                     0 Reviews
                   </span>
                 </>
@@ -312,22 +321,22 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
           </div>
 
           {/* Pricing Box */}
-          <div className="flex items-baseline gap-3.5 py-3 border-y border-[#EDE6DA]/60">
-            <span className="text-3xl font-bold font-serif">
+          <div className="flex items-baseline gap-3.5 py-3 border-y border-amber-100/60">
+            <span className="text-3xl font-jakarta font-medium">
               ₹{product.discountPrice.toLocaleString('en-IN')}
             </span>
             {isDiscounted && (
               <>
-                <span className="text-sm text-gray-400 line-through">
+                <span className="text-sm font-jakarta font-medium text-gray-400 line-through">
                   ₹{product.price.toLocaleString('en-IN')}
                 </span>
-                <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider">
+                <span className="text-xs text-[#D4AF37] font-semibold uppercase tracking-wider">
                   Save ₹{(product.price - product.discountPrice).toLocaleString('en-IN')}
                 </span>
               </>
             )}
           </div>
-<div className="flex gap-4 mt-4 border-b border-gray-200">
+<div className="flex gap-4 mt-4 border-b border-amber-100">
   {['description', 'specifications', 'reviews', 'faq'].map((tab) => (
     <button
       key={tab}
@@ -342,19 +351,19 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
 {activeTab === 'description' && (
   <div className="mt-4">
     {/* Short Description */}
-    <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+    <p className="font-jakarta font-normal text-sm leading-relaxed text-gray-500">
       {product.description}
     </p>
 
     {/* Key materials and Wear styles */}
-    <div className="grid grid-cols-2 gap-4 text-xs bg-[#F8F5F0] border border-[#EDE6DA] p-4 rounded-2xl">
+    <div className="grid grid-cols-2 gap-4 text-xs bg-[#F8F5F0] border border-amber-100 p-4 rounded-2xl">
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-wider text-gray-400">Perfect For:</span>
-        <span className="font-semibold capitalize text-[#4B352A]">{product.wearType} Wear</span>
+        <span className="text-xs uppercase tracking-wider text-gray-400">Perfect For:</span>
+        <span className="font-medium capitalize text-[#4B352A]">{product.wearType} Wear</span>
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-wider text-gray-400">Stock Availability:</span>
-        <span className={`font-semibold ${product.stock <= 5 ? 'text-amber-600 font-bold' : 'text-emerald-700'}`}>
+        <span className="text-xs uppercase tracking-wider text-gray-400">Stock Availability:</span>
+        <span className={`font-medium ${product.stock <= 5 ? 'text-amber-600 font-medium' : 'text-emerald-700'}`}>
           {product.stock <= 0 ? 'Out of Stock' : product.stock <= 5 ? `Low Stock (${product.stock} left)` : 'In Stock'}
         </span>
       </div>
@@ -365,18 +374,18 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
           {/* QUANTITY SELECTOR */}
           {product.stock > 0 && (
             <div className="flex items-center gap-4">
-              <span className="text-xs font-semibold tracking-wider text-[#4B352A] uppercase">Quantity:</span>
-              <div className="flex items-center border border-[#EDE6DA] bg-white rounded-xl overflow-hidden shadow-sm">
+              <span className="text-xs font-medium tracking-wider text-[#4B352A] uppercase">Quantity:</span>
+              <div className="flex items-center border border-amber-100 bg-white rounded-xl overflow-hidden shadow-sm">
                 <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="px-3.5 py-2 hover:bg-gray-50 transition-colors text-sm font-bold border-r border-[#EDE6DA]"
+                  className="px-3.5 py-2 hover:bg-gray-50 transition-colors text-sm font-medium border-r border-amber-100"
                 >
                   -
                 </button>
-                <span className="px-4 py-2 text-xs font-bold w-12 text-center select-none">{quantity}</span>
+                <span className="px-4 py-2 text-xs font-normal w-12 text-center select-none">{quantity}</span>
                 <button
                   onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                  className="px-3.5 py-2 hover:bg-gray-50 transition-colors text-sm font-bold border-l border-[#EDE6DA]"
+                  className="px-3.5 py-2 hover:bg-gray-50 transition-colors text-sm font-medium border-l border-amber-100"
                 >
                   +
                 </button>
@@ -389,10 +398,10 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             <button
               onClick={() => addToCart(product, quantity)}
               disabled={product.stock <= 0}
-              className={`flex-grow py-3.5 flex items-center justify-center gap-2 font-semibold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 border ${
+              className={`flex-grow py-3.5 flex items-center justify-center gap-2 font-medium text-xs uppercase tracking-wider rounded-xl transition-transform duration-200 shadow-md active:scale-95 border ${
                 product.stock <= 0
-                  ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed shadow-none'
-                  : 'bg-white border-[#EDE6DA] hover:border-[#D4AF37] text-[#1A1A1A] hover:bg-[#F8F5F0]'
+                  ? 'bg-gray-100 border-amber-100 text-gray-400 cursor-not-allowed shadow-none'
+                  : 'bg-white border-amber-100 hover:border-[#D4AF37] text-[#1A1A1A] hover:bg-[#F8F5F0]'
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
@@ -402,9 +411,9 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             <button
               onClick={handleBuyNow}
               disabled={product.stock <= 0}
-              className={`flex-grow py-3.5 flex items-center justify-center gap-2 font-semibold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 text-[#EDE6DA] border ${
+              className={`flex-grow py-3.5 flex items-center justify-center gap-2 font-medium text-xs uppercase tracking-wider rounded-xl transition-transform duration-200 shadow-md active:scale-95 text-[#EDE6DA] border ${
                 product.stock <= 0
-                  ? 'bg-gray-200 border-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                  ? 'bg-gray-200 border-amber-100 text-gray-400 cursor-not-allowed shadow-none'
                   : 'bg-[#1A1A1A] border-gray-800 hover:bg-[#2A2A2A]'
               }`}
             >
@@ -414,10 +423,10 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             {/* Wishlist toggle */}
             <button
               onClick={() => toggleWishlist(product.id)}
-              className={`p-3.5 rounded-xl border transition-all active:scale-95 shadow-sm flex items-center justify-center ${
+              className={`p-3.5 rounded-xl border transition-transform duration-200 active:scale-95 shadow-sm flex items-center justify-center ${
                 isWishlisted
                   ? 'bg-red-50 border-red-100 text-red-500 hover:bg-red-100'
-                  : 'bg-white border-[#EDE6DA] hover:border-[#D4AF37] text-gray-400 hover:text-red-500'
+                  : 'bg-white border-amber-100 hover:border-[#D4AF37] text-gray-400 hover:text-red-500'
               }`}
               title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
@@ -428,8 +437,8 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
           {/* ----------------------------------------------------
               PINCODE SHIPPING CALCULATOR
               ---------------------------------------------------- */}
-          <div className="border border-[#EDE6DA] rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 mt-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-[#4B352A] uppercase">
+          <div className="border border-amber-100 rounded-2xl p-4 bg-gray-50 flex flex-col gap-3 mt-1">
+            <div className="flex items-center gap-2 text-xs font-normal text-[#4B352A] uppercase">
               <Truck className="w-4 h-4 text-[#D4AF37]" />
               <span>Check Delivery Pincode</span>
             </div>
@@ -441,17 +450,17 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                 maxLength={6}
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                className="flex-grow bg-white border border-[#EDE6DA] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#D4AF37] font-bold"
+                className="flex-grow bg-white border border-amber-100 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#D4AF37] font-medium"
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors"
+                className="px-4 py-2 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-medium uppercase tracking-wider rounded-xl transition-colors"
               >
                 Check
               </button>
             </form>
             {deliveryEstimate && (
-              <p className="text-xs text-emerald-700 font-bold flex items-center gap-1">
+              <p className="text-xs text-emerald-700 font-normal flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>{deliveryEstimate}</span>
               </p>
@@ -461,27 +470,27 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
           {/* ----------------------------------------------------
               SHARE PRODUCTS ROW
               ---------------------------------------------------- */}
-          <div className="flex items-center gap-3.5 pt-2 text-xs border-t border-[#EDE6DA]/40">
-            <span className="text-gray-400 font-semibold flex items-center gap-1">
+          <div className="flex items-center gap-3.5 pt-2 text-xs border-t border-amber-100/40">
+            <span className="text-gray-400 font-medium flex items-center gap-1">
               <Share2 className="w-3.5 h-3.5" />
               <span>Share Product:</span>
             </span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => shareProduct('whatsapp')}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-bold border border-emerald-100 transition-colors"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-medium border border-emerald-100 transition-colors"
               >
                 WhatsApp
               </button>
               <button
                 onClick={() => shareProduct('facebook')}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg font-bold border border-blue-100 transition-colors"
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg font-medium border border-blue-100 transition-colors"
               >
                 Facebook
               </button>
               <button
                 onClick={() => shareProduct('copy')}
-                className="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg transition-colors flex items-center justify-center"
+                className="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-amber-100 rounded-lg transition-colors flex items-center justify-center"
                 title="Copy Link"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -495,10 +504,10 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
       {/* ----------------------------------------------------
           BOTTOM: INFORMATION SECTION & REVIEWS
           ---------------------------------------------------- */}
-      <div className="mt-16 bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-10 shadow-sm">
+      <div className="mt-16 bg-white border border-amber-100 rounded-3xl p-6 sm:p-10 shadow-sm">
         <div className="flex flex-col gap-6 text-[#1A1A1A]">
-          <div className="prose max-w-none text-xs sm:text-sm text-gray-600 leading-relaxed">
-            <h3 className="text-md font-serif font-bold uppercase tracking-wider text-[#1A1A1A] mb-3">
+          <div className="prose max-w-none font-jakarta font-normal text-sm leading-relaxed text-gray-600">
+            <h3 className="text-md font-display font-medium tracking-wide uppercase tracking-wider text-[#1A1A1A] mb-3">
               Materials & Care Instruction
             </h3>
               <p>
@@ -514,28 +523,28 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             </div>
 
 {activeTab === 'specifications' && (
-  <div className="w-full border-t border-[#EDE6DA] pt-6 mt-4">
-    <h3 className="text-md font-serif font-bold uppercase tracking-wider mb-4">Product Specifications</h3>
-    <table className="w-full text-xs text-left text-gray-600 border border-gray-100">
+  <div className="w-full border-t border-amber-100 pt-6 mt-4">
+    <h3 className="text-md font-display font-medium tracking-wide uppercase tracking-wider mb-4">Product Specifications</h3>
+    <table className="w-full font-jakarta text-xs text-left text-gray-600 border border-gray-100">
       <tbody>
         <tr className="border-b border-gray-50 bg-gray-50/50">
-          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Material</td>
+          <td className="px-4 py-3 font-medium text-[#1A1A1A]">Material</td>
           <td className="px-4 py-3">{product.material || '-'}</td>
         </tr>
         <tr className="border-b border-gray-50">
-          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Style</td>
+          <td className="px-4 py-3 font-medium text-[#1A1A1A]">Style</td>
           <td className="px-4 py-3">{product.style || '-'}</td>
         </tr>
         <tr className="border-b border-gray-50 bg-gray-50/50">
-          <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Occasion</td>
+          <td className="px-4 py-3 font-medium text-[#1A1A1A]">Occasion</td>
           <td className="px-4 py-3">{product.occasion || '-'}</td>
         </tr>
                   <tr className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Weight</td>
+                    <td className="px-4 py-3 font-medium text-[#1A1A1A]">Weight</td>
                     <td className="px-4 py-3">{product.weight || '-'}</td>
                   </tr>
                   <tr className="bg-gray-50/50">
-                    <td className="px-4 py-3 font-semibold text-[#1A1A1A]">Availability</td>
+                    <td className="px-4 py-3 font-medium text-[#1A1A1A]">Availability</td>
                     <td className="px-4 py-3">{product.availability || '-'}</td>
                   </tr>
                 </tbody>
@@ -551,17 +560,17 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             <div className="flex flex-col gap-6">
               {approvedReviews.length > 0 ? (
                 approvedReviews.map((rev) => (
-                  <div key={rev.id} className="border-b border-[#EDE6DA] pb-6 flex flex-col gap-3">
+                  <div key={rev.id} className="border-b border-amber-100 pb-6 flex flex-col gap-3">
                     <div className="flex justify-between items-start gap-4">
                       <div>
-                        <h4 className="text-sm font-bold">{rev.userName}</h4>
-                        <span className="text-[10px] text-gray-400">{new Date(rev.createdAt || '').toLocaleDateString('en-IN')}</span>
+                        <h4 className="text-sm font-medium">{rev.userName}</h4>
+                        <span className="text-xs text-gray-400">{new Date(rev.createdAt || '').toLocaleDateString('en-IN')}</span>
                       </div>
                       
                       {/* stars */}
                       <div className="flex text-amber-500 text-xs">
                         {Array.from({ length: 5 }).map((_, i) => (
-                          <span key={i} className={i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-gray-300'}>★</span>
+                          <span key={i} className={i < rev.rating ? 'fill-amber-500 text-amber-500' : 'text-neutral-500'}>★</span>
                         ))}
                       </div>
                     </div>
@@ -571,18 +580,18 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                     </p>
 
                     {rev.image && (
-                      <div className="w-24 h-24 rounded-lg overflow-hidden border border-[#EDE6DA] shadow-sm bg-gray-50 mt-1 relative">
+                      <div className="w-24 h-24 rounded-lg overflow-hidden border border-amber-100 shadow-sm bg-gray-50 mt-1 relative">
                         <Image src={rev.image} alt="User review photo" fill className="object-cover" />
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <div className="text-center py-10 border border-dashed border-[#EDE6DA] rounded-xl p-4 bg-gray-50">
-                  <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest">
+                <div className="text-center py-10 border border-dashed border-amber-100 rounded-xl p-4 bg-gray-50">
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">
                     No approved reviews listed yet.
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1 font-body">
+                  <p className="text-xs text-gray-400 mt-1 font-body">
                     Be the first verified customer to share your experience!
                   </p>
                 </div>
@@ -590,8 +599,8 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             </div>
 
             {/* WRITE A REVIEW FORM PANEL */}
-            <div className="border-t border-[#EDE6DA] pt-8 mt-4 bg-gray-50 rounded-2xl p-6 border border-[#EDE6DA]">
-              <h3 className="text-md font-serif font-bold uppercase tracking-wider mb-4 flex items-center gap-1">
+            <div className="border-t border-amber-100 pt-8 mt-4 bg-gray-50 rounded-2xl p-6 border border-amber-100">
+              <h3 className="text-md font-display font-medium tracking-wide uppercase tracking-wider mb-4 flex items-center gap-1">
                 <span>Write A Customer Review</span>
               </h3>
               
@@ -600,7 +609,7 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                   
                   {/* Stars select */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4B352A]">
+                    <label className="text-xs font-medium uppercase tracking-widest text-[#4B352A]">
                       Select Star Rating:
                     </label>
                     <div className="flex items-center gap-2">
@@ -611,16 +620,16 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                           onClick={() => setReviewRating(star)}
                           className="p-1 text-2xl transition-transform hover:scale-110 active:scale-95"
                         >
-                          <span className={star <= reviewRating ? 'text-amber-500' : 'text-gray-300'}>★</span>
+                          <span className={star <= reviewRating ? 'text-amber-500' : 'text-neutral-500'}>★</span>
                         </button>
                       ))}
-                      <span className="text-xs text-gray-500 font-bold ml-1">({reviewRating}/5 Stars)</span>
+                      <span className="text-xs text-gray-500 font-normal ml-1">({reviewRating}/5 Stars)</span>
                     </div>
                   </div>
 
                   {/* Comment input */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4B352A]">
+                    <label className="text-xs font-medium uppercase tracking-widest text-[#4B352A]">
                       Review Comment:
                     </label>
                     <textarea
@@ -629,13 +638,13 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                       value={reviewComment}
                       onChange={(e) => setReviewComment(e.target.value)}
                       rows={4}
-                      className="w-full bg-white border border-[#EDE6DA] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#D4AF37] font-body resize-y"
+                      className="w-full bg-white border border-amber-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#D4AF37] font-body resize-y"
                     />
                   </div>
 
                   {/* Photo upload input */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-[#4B352A]">
+                    <label className="text-xs font-medium uppercase tracking-widest text-[#4B352A]">
                       Upload Review Photo (Optional):
                     </label>
                     <div className="relative">
@@ -648,7 +657,7 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                       />
                       <label
                         htmlFor="reviewPhotoInput"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#EDE6DA] rounded-xl cursor-pointer text-xs font-semibold text-gray-600 hover:border-[#D4AF37] hover:bg-[#F8F5F0] transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-amber-100 rounded-xl cursor-pointer text-xs font-medium text-gray-600 hover:border-[#D4AF37] hover:bg-[#F8F5F0] transition-colors"
                       >
                         <Camera className="w-4 h-4 text-[#D4AF37]" />
                         <span>{reviewPhoto ? reviewPhoto.name : 'Choose Photo File'}</span>
@@ -660,7 +669,7 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                   <button
                     type="submit"
                     disabled={submittingReview}
-                    className="w-full sm:w-56 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-semibold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1"
+                    className="w-full sm:w-56 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-medium text-xs uppercase tracking-wider rounded-xl transition-transform duration-200 shadow-md active:scale-95 flex items-center justify-center gap-1"
                   >
                     {submittingReview ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -674,12 +683,12 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
                 </form>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-xs text-gray-500 font-semibold">
+                  <p className="text-xs text-gray-500 font-medium">
                     Please log in to your account to review this article.
                   </p>
                   <button
                     onClick={() => triggerToast("Please login from the navbar panel.", "info")}
-                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-[10px] font-semibold uppercase tracking-wider rounded-xl"
+                    className="mt-4 px-6 py-2 bg-[#1A1A1A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl"
                   >
                     Login / Sign In
                   </button>
@@ -697,11 +706,11 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
       {relatedProducts.length > 0 && (
         <div className="mt-20">
           <div className="text-center mb-10">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Curated Pairings</span>
-            <h2 className="text-2xl sm:text-3xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+            <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Curated Pairings</span>
+            <h2 className="text-2xl sm:text-3xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-1 tracking-wider">
               Related Products
             </h2>
-            <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+            <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

@@ -97,7 +97,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     freeShippingLimit: 299,
     standardShippingCharge: 19,
     enableFreeShipping: true,
-    announcementText: "✨ Buy Any 3 Products & Receive A Complimentary Gift From KAELORA ✨",
+    announcementText: "",
     storePhone: "+91 6305517109",
     whatsappNumber: "+91 6305517109",
     giftGoal: 3,

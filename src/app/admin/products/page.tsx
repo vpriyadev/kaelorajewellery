@@ -6,6 +6,7 @@ import { serviceDb, Product } from '../../../lib/firebase';
 import { uploadToCloudinary } from '../../../lib/cloudinary';
 import { validateImageFiles, getFriendlyErrorMessage, processImageForUpload } from '../../../lib/imageUtils';
 import { normalizeSlug } from '../../../lib/slugUtils';
+import Image from 'next/image';
 import { Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
 
 export default function AdminProductsPage() {
@@ -313,7 +314,7 @@ export default function AdminProductsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-serif font-semibold mb-2">Product Registry</h2>
+          <h2 className="text-2xl font-display font-light tracking-wide mb-2">Product Registry</h2>
           <p className="text-sm text-gray-600">Add, edit and remove product listings from the store.</p>
         </div>
         <button onClick={handleAddProduct} className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600">
@@ -323,7 +324,7 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Products Table */}
-      <div className="bg-white border border-[#EDE6DA] rounded-3xl overflow-hidden">
+      <div className="bg-white border border-amber-100 rounded-3xl overflow-hidden">
         {loading && products.length === 0 ? (
           <div className="p-6 text-center text-gray-500">Loading products...</div>
         ) : products.length === 0 ? (
@@ -331,18 +332,18 @@ export default function AdminProductsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-[#EDE6DA]">
+              <thead className="bg-gray-50 border-b border-amber-100">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Price</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Stock</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Stock</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Category</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map(product => (
-                  <tr key={product.id} className="border-b border-[#EDE6DA] hover:bg-gray-50">
+                  <tr key={product.id} className="border-b border-amber-100 hover:bg-gray-50">
                     <td className="px-6 py-3 text-sm text-gray-700">{product.name}</td>
                     <td className="px-6 py-3 text-sm text-gray-700">₹{product.discountPrice}</td>
                     <td className="px-6 py-3 text-sm text-gray-700">
@@ -368,9 +369,9 @@ export default function AdminProductsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[900px] max-min-h-dvh overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">{editingId ? 'Edit Product' : 'Add New Product'}</h3>
+              <h3 className="text-xl font-medium">{editingId ? 'Edit Product' : 'Add New Product'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded">
                 <X size={20} />
               </button>
@@ -378,16 +379,16 @@ export default function AdminProductsPage() {
             {/* Form Fields */}
             <label className="block">
               <span className="text-sm font-medium">Product Name *</span>
-              <input type="text" placeholder="Enter product name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+              <input type="text" placeholder="Enter product name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
             </label>
 
             <label className="block">
               <span className="text-sm font-medium">Description *</span>
-              <textarea placeholder="Description" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full mt-1 px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+              <textarea placeholder="Description" rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full mt-1 px-4 py-2 border border-amber-100 rounded-lg" />
             </label>
             <label className="block">
               <span className="text-sm font-medium">Category *</span>
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value as any })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg">
+              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value as any })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg">
                 <option value="earrings">Earrings</option>
                 <option value="chains">Chains</option>
                 <option value="bangles">Bangles</option>
@@ -420,23 +421,23 @@ export default function AdminProductsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                 <label className="block">
                   <span className="text-sm font-medium">Material</span>
-                  <input type="text" placeholder="e.g. 18k Gold Plated" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                  <input type="text" placeholder="e.g. 18k Gold Plated" value={form.material} onChange={e => setForm({ ...form, material: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium">Style</span>
-                  <input type="text" placeholder="e.g. Minimalist" value={form.style} onChange={e => setForm({ ...form, style: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                  <input type="text" placeholder="e.g. Minimalist" value={form.style} onChange={e => setForm({ ...form, style: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium">Occasion</span>
-                  <input type="text" placeholder="e.g. Wedding, Daily" value={form.occasion} onChange={e => setForm({ ...form, occasion: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                  <input type="text" placeholder="e.g. Wedding, Daily" value={form.occasion} onChange={e => setForm({ ...form, occasion: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium">Weight</span>
-                  <input type="text" placeholder="e.g. 15g" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                  <input type="text" placeholder="e.g. 15g" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium">Availability</span>
-                  <input type="text" placeholder="e.g. Ships in 24 hours" value={form.availability} onChange={e => setForm({ ...form, availability: e.target.value })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                  <input type="text" placeholder="e.g. Ships in 24 hours" value={form.availability} onChange={e => setForm({ ...form, availability: e.target.value })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
                 </label>
               </div>
             </div>
@@ -461,16 +462,16 @@ export default function AdminProductsPage() {
             <div className="grid grid-cols-2 gap-4">
               <label className="block">
                 <span className="text-sm font-medium">Price (₹) *</span>
-                <input type="number" placeholder="Enter price" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                <input type="number" placeholder="Enter price" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
               </label>
               <label className="block">
                 <span className="text-sm font-medium">Discount Price (₹) (Optional)</span>
-                <input type="number" placeholder="Enter discount price" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+                <input type="number" placeholder="Enter discount price" value={form.discountPrice} onChange={e => setForm({ ...form, discountPrice: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
               </label>
             </div>
             <label className="block">
               <span className="text-sm font-medium">Stock Quantity *</span>
-              <input type="number" placeholder="Enter available stock" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+              <input type="number" placeholder="Enter available stock" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
             </label>
 
             {/* Product Images Section */}
@@ -480,7 +481,7 @@ export default function AdminProductsPage() {
               
               {/* Image Input */}
               <div className="mt-2">
-                <label className="flex items-center justify-center w-full p-4 border-2 border-dashed border-[#EDE6DA] rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" style={uploadingImages ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
+                <label className="flex items-center justify-center w-full p-4 border-2 border-dashed border-amber-100 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors" style={uploadingImages ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload size={20} className="mb-2 text-amber-500" />
                     <p className="text-sm font-medium">
@@ -508,7 +509,7 @@ export default function AdminProductsPage() {
                 <div className="mt-3">
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
-                      className="bg-amber-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-amber-500 h-2 rounded-full transition-colors duration-200"
                       style={{ width: `${uploadProgress}%` }}
                     ></div>
                   </div>
@@ -525,10 +526,12 @@ export default function AdminProductsPage() {
                   <div className="grid grid-cols-3 gap-2">
                     {form.images.map((img, idx) => (
                       <div key={idx} className="relative group">
-                        <img 
+                        <Image 
                           src={typeof img === 'string' ? img : img.url} 
                           alt={`preview-${idx}`} 
-                          className="h-24 w-24 object-cover rounded border border-[#EDE6DA]"
+                          width={96}
+                          height={96}
+                          className="h-24 w-24 object-cover rounded border border-amber-100"
                         />
                         <button
                           type="button"
@@ -586,7 +589,7 @@ export default function AdminProductsPage() {
 <div className="mt-2">
   <label className="block">
     <span className="text-sm font-medium">Delivery Fee (₹)</span>
-    <input type="number" placeholder="Enter delivery fee" value={form.deliveryFee} onChange={e => setForm({ ...form, deliveryFee: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-[#EDE6DA] rounded-lg" />
+    <input type="number" placeholder="Enter delivery fee" value={form.deliveryFee} onChange={e => setForm({ ...form, deliveryFee: Number(e.target.value) })} className="mt-1 w-full px-4 py-2 border border-amber-100 rounded-lg" />
   </label>
   <label className="flex items-center gap-2 mt-2">
     <input type="checkbox" checked={form.freeDelivery} onChange={e => setForm({ ...form, freeDelivery: e.target.checked })} />
@@ -594,7 +597,7 @@ export default function AdminProductsPage() {
   </label>
 </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-[#EDE6DA] rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-amber-100 rounded-lg hover:bg-gray-50">Cancel</button>
               <button onClick={handleSaveProduct} disabled={loading || uploadingImages} className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50">
                 {loading ? 'Saving...' : uploadingImages ? 'Uploading...' : 'Save Product'}
               </button>

@@ -341,7 +341,7 @@ const loadRazorpay = () => {
     
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 font-body text-[#1A1A1A]">
-        <div className="bg-white border border-[#EDE6DA] rounded-3xl p-8 sm:p-12 shadow-xl text-center flex flex-col items-center gap-6 relative overflow-hidden">
+        <div className="bg-white border border-amber-100 rounded-3xl p-8 sm:p-12 shadow-xl text-center flex flex-col items-center gap-6 relative overflow-hidden">
           {/* Top golden ribbon banner */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#EDE6DA] via-[#D4AF37] to-[#EDE6DA]" />
           
@@ -350,47 +350,47 @@ const loadRazorpay = () => {
           </div>
 
           <div>
-            <span className="text-[10px] uppercase tracking-[0.35em] text-[#D4AF37] font-bold">Transaction Complete</span>
-            <h1 className="text-3xl font-serif font-semibold uppercase tracking-wider mt-1">Order Placed Successfully!</h1>
-            <p className="text-xs text-gray-400 mt-2 font-medium">Order ID: <span className="font-mono font-bold text-[#1A1A1A]">{completedOrder.id}</span></p>
+            <span className="text-xs uppercase tracking-[0.35em] text-[#D4AF37] font-normal">Transaction Complete</span>
+            <h1 className="text-3xl font-display font-light tracking-wide uppercase tracking-wider mt-1">Order Placed Successfully!</h1>
+            <p className="text-xs text-gray-400 mt-2 font-medium">Order ID: <span className="font-mono font-normal text-[#1A1A1A]">{completedOrder.id}</span></p>
           </div>
 
           {/* Delivery dates cards */}
-          <div className="w-full bg-[#F8F5F0] border border-[#EDE6DA] rounded-2xl p-5 max-w-md flex items-center gap-4 text-left">
+          <div className="w-full bg-[#F8F5F0] border border-amber-100 rounded-2xl p-5 max-w-md flex items-center gap-4 text-left">
             <Calendar className="w-10 h-10 text-[#D4AF37] flex-shrink-0" />
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Estimated Delivery Date:</p>
-              <h4 className="text-sm font-bold text-[#1A1A1A]">{estDelivery}</h4>
-              <p className="text-[10px] text-gray-500 mt-0.5">Your parcel will be delivered via Express Courier.</p>
+              <p className="text-xs uppercase tracking-wider text-gray-400 font-medium">Estimated Delivery Date:</p>
+              <h4 className="text-sm font-medium text-[#1A1A1A]">{estDelivery}</h4>
+              <p className="text-xs text-gray-500 mt-0.5">Your parcel will be delivered via Express Courier.</p>
             </div>
           </div>
 
           {/* Order particulars grid summary */}
-          <div className="w-full border-t border-b border-[#EDE6DA] py-6 flex flex-col gap-3 text-xs text-gray-500 text-left">
-            <h3 className="font-bold text-[#1A1A1A] uppercase tracking-wider text-[11px] mb-1">Shipping Particulars:</h3>
+          <div className="w-full border-t border-b border-amber-100 py-6 flex flex-col gap-3 text-xs text-gray-500 text-left">
+            <h3 className="font-medium text-[#1A1A1A] uppercase tracking-wider text-xs mb-1">Shipping Particulars:</h3>
             {completedOrder?.shippingAddress ? (
               <>
-                <p><span className="font-semibold text-gray-700">Recipient Name:</span> {completedOrder.shippingAddress.fullName ?? 'N/A'}</p>
-                <p><span className="font-semibold text-gray-700">Contact Mobile:</span> {completedOrder.shippingAddress.phone ?? 'N/A'}</p>
-                <p><span className="font-semibold text-gray-700">Shipping Address:</span> {`${(completedOrder.shippingAddress as any).addressLine || completedOrder.shippingAddress.addressLine1 || 'N/A'}, ${completedOrder.shippingAddress.city ?? 'N/A'}, ${completedOrder.shippingAddress.state ?? 'N/A'} - ${completedOrder.shippingAddress.pincode ?? 'N/A'}`}</p>
+                <p><span className="font-medium text-gray-700">Recipient Name:</span> {completedOrder.shippingAddress.fullName ?? 'N/A'}</p>
+                <p><span className="font-medium text-gray-700">Contact Mobile:</span> {completedOrder.shippingAddress.phone ?? 'N/A'}</p>
+                <p><span className="font-medium text-gray-700">Shipping Address:</span> {`${(completedOrder.shippingAddress as any).addressLine || completedOrder.shippingAddress.addressLine1 || 'N/A'}, ${completedOrder.shippingAddress.city ?? 'N/A'}, ${completedOrder.shippingAddress.state ?? 'N/A'} - ${completedOrder.shippingAddress.pincode ?? 'N/A'}`}</p>
               </>
             ) : (
-              <p className="font-semibold text-gray-700">Shipping details unavailable</p>
+              <p className="font-medium text-gray-700">Shipping details unavailable</p>
             )}
-            <p><span className="font-semibold text-gray-700">Payment Status:</span> <span className="uppercase font-bold text-[#D4AF37]">{completedOrder.paymentMethod ?? 'online'}</span> ({completedOrder.paymentStatus ?? 'Paid'})</p>
-            <p><span className="font-semibold text-gray-700">Total Sum Paid:</span> <span className="font-bold text-[#1A1A1A] font-serif text-sm">₹{(completedOrder.totalAmount ?? 0).toLocaleString('en-IN')}</span></p>
+            <p><span className="font-medium text-gray-700">Payment Status:</span> <span className="uppercase font-normal text-[#D4AF37]">{completedOrder.paymentMethod ?? 'online'}</span> ({completedOrder.paymentStatus ?? 'Paid'})</p>
+            <p><span className="font-semibold text-gray-700">Total Sum Paid:</span> <span className="font-semibold text-[#1A1A1A] font-body font-medium text-sm">₹{(completedOrder.totalAmount ?? 0).toLocaleString('en-IN')}</span></p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center mt-2">
             <Link
               href="/account"
-              className="w-full sm:w-48 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-semibold uppercase tracking-wider rounded-xl shadow-md text-center"
+              className="w-full sm:w-48 py-3 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white text-xs font-medium uppercase tracking-wider rounded-xl shadow-md text-center"
             >
               Track Order
             </Link>
             <Link
               href="/shop"
-              className="w-full sm:w-48 py-3 bg-white border border-[#EDE6DA] hover:border-gray-300 text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xl text-center"
+              className="w-full sm:w-48 py-3 bg-white border border-amber-100 hover:border-gray-300 text-[#1A1A1A] text-xs font-medium uppercase tracking-wider rounded-xl text-center"
             >
               Continue Shopping
             </Link>
@@ -406,11 +406,11 @@ const loadRazorpay = () => {
   if (!user) {
     return (
       <div className="max-w-md mx-auto px-6 py-24 font-body text-center">
-        <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6 border border-[#EDE6DA]">
+        <div className="w-14 h-14 rounded-full bg-[#EDE6DA]/30 flex items-center justify-center mx-auto mb-6 border border-amber-100">
           <ShieldCheck className="w-7 h-7 text-[#D4AF37]" />
         </div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37] font-semibold">Secure Checkout Gateway</span>
-        <h2 className="text-2xl font-serif font-semibold text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
+        <span className="text-xs uppercase tracking-[0.25em] text-[#D4AF37] font-medium">Secure Checkout Gateway</span>
+        <h2 className="text-2xl font-display font-light tracking-wide text-[#1A1A1A] uppercase tracking-wider mt-1.5 leading-tight">
           Checkout Access Gate
         </h2>
         <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed mt-3">
@@ -419,7 +419,7 @@ const loadRazorpay = () => {
 
         <button
           onClick={() => setAuthModalOpen(true)}
-          className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-95"
+          className="mt-8 w-full py-3.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#EDE6DA] text-xs font-semibold uppercase tracking-widest rounded-xl transition-transform duration-200 shadow-md active:scale-95"
         >
           Login / Register Now
         </button>
@@ -432,37 +432,37 @@ const loadRazorpay = () => {
       
       {/* Title */}
       <div className="text-center mb-10">
-        <span className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-semibold">Secure Gateway</span>
-        <h1 className="text-3xl sm:text-4xl font-serif font-semibold text-[#1A1A1A] uppercase mt-1 tracking-wider">
+        <span className="text-xs uppercase tracking-[0.3em] text-[#D4AF37] font-medium">Secure Gateway</span>
+        <h1 className="text-3xl sm:text-4xl font-display font-light tracking-wide text-[#1A1A1A] uppercase mt-1 tracking-wider">
           Checkout
         </h1>
-        <div className="w-12 h-[1px] bg-[#D4AF37] mx-auto mt-4" />
+        <div className="w-12 h-px bg-[#D4AF37] mx-auto mt-4" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         
         {/* LEFT COLUMN: SHIPPING ADDRESS & BILLINGS FORM */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <form onSubmit={handlePlaceOrder} className="bg-white border border-[#EDE6DA] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-5">
+          <form onSubmit={handlePlaceOrder} className="bg-white border border-amber-100 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col gap-5">
             
             {/* Form Section 1 Header */}
             <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-2">
               <MapPin className="w-5 h-5 text-[#D4AF37]" />
-              <h3 className="text-sm font-serif font-semibold uppercase tracking-widest text-[#1A1A1A]">
+              <h3 className="text-sm font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A]">
                 Shipping Particulars
               </h3>
             </div>
 
             {/* SAVED ADDRESS BOOK DROPDOWN */}
             {savedAddresses.length > 0 && (
-              <div className="flex flex-col gap-1.5 bg-[#F8F5F0] border border-[#EDE6DA] p-4 rounded-2xl mb-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#4B352A]">
+              <div className="flex flex-col gap-1.5 bg-[#F8F5F0] border border-amber-100 p-4 rounded-2xl mb-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-[#4B352A]">
                   Select From Address Book:
                 </label>
                 <select
                   value={selectedAddressId}
                   onChange={handleAddressSelectChange}
-                  className="bg-white border border-[#EDE6DA] rounded-xl px-3 py-2 text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] mt-1"
+                  className="bg-white border border-amber-100 rounded-xl px-3 py-2 text-xs font-medium text-[#1A1A1A] focus:outline-none focus:border-[#D4AF37] mt-1"
                 >
                   <option value="new">-- Ship to a New Address --</option>
                   {savedAddresses.map((addr) => (
@@ -477,19 +477,19 @@ const loadRazorpay = () => {
             {/* Inputs row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">Recipient Name *</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">Recipient Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="E.g. Priya Sharma"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-semibold"
+                  className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">Contact Mobile *</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">Contact Mobile *</label>
                 <input
                   type="tel"
                   required
@@ -497,52 +497,52 @@ const loadRazorpay = () => {
                   maxLength={10}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-bold"
+                  className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
                 />
               </div>
             </div>
 
             {/* Input Address Line */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">Shipping Address *</label>
+              <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">Shipping Address *</label>
               <input
                 type="text"
                 required
                 placeholder="Flat / House No, Apartment Name, Street Name"
                 value={addressLine}
                 onChange={(e) => setAddressLine(e.target.value)}
-                className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-semibold"
+                className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
               />
             </div>
 
             {/* Row 3 inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">Town / City *</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">Town / City *</label>
                 <input
                   type="text"
                   required
                   placeholder="E.g. Vellore"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-semibold"
+                  className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">State *</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">State *</label>
                 <input
                   type="text"
                   required
                   placeholder="E.g. Tamil Nadu"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-semibold"
+                  className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-[#4B352A]">Pincode *</label>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#4B352A]">Pincode *</label>
                 <input
                   type="text"
                   required
@@ -550,19 +550,19 @@ const loadRazorpay = () => {
                   maxLength={6}
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                  className="bg-gray-50 border border-[#EDE6DA] rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-bold"
+                  className="bg-gray-50 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-[#1A1A1A] placeholder-gray-400 focus:outline-none focus:border-[#D4AF37] font-medium"
                 />
               </div>
             </div>
 
             {/* Save Address check box */}
             {selectedAddressId === 'new' && (
-              <label className="flex items-center gap-2 text-xs font-semibold text-gray-600 mt-1 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-medium text-gray-600 mt-1 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={saveToBook}
                   onChange={(e) => setSaveToBook(e.target.checked)}
-                  className="rounded border-[#EDE6DA] text-[#D4AF37] focus:ring-[#D4AF37] w-4 h-4"
+                  className="rounded border-amber-100 text-[#D4AF37] focus:ring-[#D4AF37] w-4 h-4"
                 />
                 <span>Save to Address Book for future checkout</span>
               </label>
@@ -571,7 +571,7 @@ const loadRazorpay = () => {
             {/* PAYMENT SIMULATOR TOGGLE */}
             <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mt-4 mb-2">
               <CreditCard className="w-5 h-5 text-[#D4AF37]" />
-              <h3 className="text-sm font-serif font-semibold uppercase tracking-widest text-[#1A1A1A]">
+              <h3 className="text-sm font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A]">
                 Payment Selection
               </h3>
             </div>
@@ -580,15 +580,15 @@ const loadRazorpay = () => {
               {/* Online Payment option */}
               <button
                 type="button"
-                className="p-4 rounded-2xl border text-left flex flex-col gap-1.5 transition-all shadow-sm border-[#D4AF37] bg-[#F8F5F0]"
+                className="p-4 rounded-2xl border text-left flex flex-col gap-1.5 transition-colors duration-200 shadow-sm border-[#D4AF37] bg-[#F8F5F0]"
               >
                 <div className="flex justify-between items-center w-full">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">Online Payment</span>
+                  <span className="text-xs font-normal uppercase tracking-wider text-[#1A1A1A]">Online Payment</span>
                   <div className="w-4 h-4 rounded-full border border-[#D4AF37] bg-[#D4AF37] flex items-center justify-center">
                     <div className="w-1.5 h-1.5 bg-white rounded-full" />
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-500 leading-normal">
+                <p className="text-xs text-gray-500 leading-normal">
                   Pay securely using Credit Cards, Debit Cards, Netbanking, Google Pay or PhonePe. (Simulated Gateway).
                 </p>
               </button>
@@ -598,7 +598,7 @@ const loadRazorpay = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="mt-4 w-full py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] text-xs font-semibold uppercase tracking-[0.2em] rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5 group border border-gray-800"
+              className="mt-4 w-full py-4 bg-[#1A1A1A] hover:bg-[#2A2A2A] active:scale-[0.98] text-[#EDE6DA] text-xs font-medium uppercase tracking-[0.2em] rounded-xl transition-transform duration-200 shadow-lg flex items-center justify-center gap-1.5 group border border-gray-800"
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -614,8 +614,8 @@ const loadRazorpay = () => {
 
         {/* RIGHT COLUMN: REAL-TIME SUMMARY & REWARD ESTIMATION */}
         <div className="flex flex-col gap-6 w-full">
-          <div className="bg-white border border-[#EDE6DA] rounded-3xl p-6 shadow-sm flex flex-col gap-5 sticky top-28">
-            <h3 className="text-sm font-serif font-semibold uppercase tracking-widest text-[#1A1A1A] border-b border-[#EDE6DA] pb-3">
+          <div className="bg-white border border-amber-100 rounded-3xl p-6 shadow-sm flex flex-col gap-5 sticky top-28">
+            <h3 className="text-sm font-display font-medium tracking-wide uppercase tracking-widest text-[#1A1A1A] border-b border-amber-100 pb-3">
               Order Particulars
             </h3>
 
@@ -631,16 +631,16 @@ const loadRazorpay = () => {
                     className="w-10 h-10 rounded-lg object-cover border border-gray-100" 
                   />
                   <div className="flex-grow min-w-0">
-                    <h4 className="font-semibold text-gray-700 truncate">{item.product.name}</h4>
-                    <span className="text-[10px] text-gray-400">Qty: {item.quantity}</span>
+                    <h4 className="font-medium text-gray-700 truncate">{item.product.name}</h4>
+                    <span className="text-xs text-gray-400">Qty: {item.quantity}</span>
                   </div>
-                  <span className="font-bold text-[#1A1A1A]">₹{(item.product.discountPrice * item.quantity).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-[#1A1A1A]">₹{(item.product.discountPrice * item.quantity).toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>
 
             {/* Pricing break downs */}
-            <div className="flex flex-col gap-3 text-xs text-gray-500 border-t border-[#EDE6DA]/40 pt-4">
+            <div className="flex flex-col gap-3 text-xs text-gray-500 border-t border-amber-100/40 pt-4">
               <div className="flex justify-between items-center">
                 <span>Subtotal</span>
                 <span className="font-semibold text-[#1A1A1A]">₹{subtotal.toLocaleString('en-IN')}</span>
@@ -653,23 +653,23 @@ const loadRazorpay = () => {
               )}
               <div className="flex justify-between items-center">
                 <span>Shipping Fee</span>
-                <span className={`font-semibold ${shippingCharge === 0 ? 'text-emerald-700 font-bold' : 'text-[#1A1A1A]'}`}>
+                <span className={`font-semibold ${shippingCharge === 0 ? 'text-emerald-700 font-semibold' : 'text-[#1A1A1A]'}`}>
                   {shippingCharge === 0 ? 'Free' : `₹${shippingCharge}`}
                 </span>
               </div>
 
               {/* Shipping and Delivery Combined summary */}
-              <div className="flex justify-between items-center border-t border-[#EDE6DA] pt-2 mt-1">
+              <div className="flex justify-between items-center border-t border-amber-100 pt-2 mt-1">
                 <span className="font-semibold text-[#1A1A1A]">Shipping & Delivery</span>
                 <span className="font-semibold text-[#1A1A1A]">₹{shippingAndDelivery.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
             {/* Loyalty Alert */}
-            <div className="bg-[#1A1A1A] border border-[#D4AF37]/50 rounded-2xl p-4 text-[#EDE6DA] flex gap-3 text-[10px] leading-relaxed">
+            <div className="bg-[#1A1A1A] border border-[#D4AF37]/50 rounded-2xl p-4 text-[#EDE6DA] flex gap-3 text-xs leading-relaxed">
               <Gift className="w-5 h-5 text-[#D4AF37] flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-[#D4AF37] uppercase tracking-wider block mb-0.5">KAELORA CLUB VALUE</span>
+                <span className="font-normal text-[#D4AF37] uppercase tracking-wider block mb-0.5">KAELORA CLUB VALUE</span>
                 {isGiftUnlocked ? (
                   <span>Complimentary Luxury Gift unlocked! Packed inside this parcel.</span>
                 ) : (
@@ -679,7 +679,7 @@ const loadRazorpay = () => {
             </div>
 
             {/* Total final */}
-            <div className="flex justify-between items-center border-t border-[#EDE6DA] pt-4 text-sm font-bold text-[#1A1A1A] font-serif">
+            <div className="flex justify-between items-center border-t border-amber-100 pt-4 text-sm font-semibold text-[#1A1A1A] font-body font-medium">
               <span>Grand Total</span>
               <span className="text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
             </div>
