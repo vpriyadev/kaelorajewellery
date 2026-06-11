@@ -369,7 +369,7 @@ export default function AdminProductsPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-[900px] max-min-h-dvh overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-[900px] max-h-[90dvh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-medium">{editingId ? 'Edit Product' : 'Add New Product'}</h3>
               <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded">

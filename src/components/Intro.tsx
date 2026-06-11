@@ -83,19 +83,19 @@ export const Intro: React.FC = () => {
               initial={{ opacity: 0, scale: 0.88 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.0, ease: 'easeOut' }}
-              className="relative mb-8"
+              className="relative mb-8 w-32 h-32 sm:w-40 sm:h-40"
             >
               {/* Decorative gold glow ring (shadow only, no fill) */}
               <div
                 className="absolute inset-0 rounded-full pointer-events-none"
-                style={{ boxShadow: '0 0 80px 20px rgba(212,175,55,0.22)' }}
+                style={{ boxShadow: '0 0 40px 10px rgba(212,175,55,0.2)' }}
               />
               {/* Logo image — plain <img> guarantees explicit pixel dimensions */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logo-burgundy.jpg"
                 alt="KAELORA Jewellery"
-                className="relative block aspect-square w-full object-cover rounded-full"
+                className="relative block w-32 h-32 sm:w-40 sm:h-40 object-cover rounded-full"
                 style={{ position: 'relative', zIndex: 10 }}
               />
             </motion.div>
