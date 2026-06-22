@@ -14,6 +14,7 @@ const NavbarContent: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileSearchActive, setMobileSearchActive] = useState(false);
+
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();

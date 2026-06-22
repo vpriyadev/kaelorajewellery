@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { serviceDb, Product } from '../../../lib/firebase';
+import { handleShare } from '../../../lib/share';
 import { useApp } from '../../../context/AppContext';
 import ProductCard from '../../../components/ProductCard';
 import { normalizeSlug } from '../../../lib/slugUtils';
@@ -183,21 +184,10 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
     } finally {
       setSubmittingReview(false);
     }
-  };
-
-  // Share methods
-  const shareProduct = (platform: 'whatsapp' | 'facebook' | 'copy') => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    const shareText = `Check out this gorgeous ${product.name} from KAELORA Jewellery! ₹${product.discountPrice}`;
-    
-    if (platform === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + url)}`);
-    } else if (platform === 'facebook') {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
-    } else {
-      navigator.clipboard.writeText(url);
-      triggerToast("Article details link copied to clipboard!", "success");
-    }
+  };  // Share button uses shared handleShare utility
+  const handleShareClick = async () => {
+    if (!product) return;
+    await handleShare(product);
   };
 
   const handleBuyNow = () => {
@@ -467,36 +457,15 @@ const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'r
             )}
           </div>
 
-          {/* ----------------------------------------------------
-              SHARE PRODUCTS ROW
-              ---------------------------------------------------- */}
-          <div className="flex items-center gap-3.5 pt-2 text-xs border-t border-amber-100/40">
-            <span className="text-gray-400 font-medium flex items-center gap-1">
-              <Share2 className="w-3.5 h-3.5" />
-              <span>Share Product:</span>
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => shareProduct('whatsapp')}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-medium border border-emerald-100 transition-colors"
-              >
-                WhatsApp
-              </button>
-              <button
-                onClick={() => shareProduct('facebook')}
-                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-lg font-medium border border-blue-100 transition-colors"
-              >
-                Facebook
-              </button>
-              <button
-                onClick={() => shareProduct('copy')}
-                className="p-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-amber-100 rounded-lg transition-colors flex items-center justify-center"
-                title="Copy Link"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+          {/* Share Button */}
+		<button
+		  onClick={() => handleShare(product)}
+		  className="flex items-center gap-2 px-3 py-1.5 bg-white border border-amber-100 rounded-lg hover:bg-gray-50 transition-colors"
+		  aria-label="Share product"
+		>
+		  <Share2 className="w-4 h-4" />
+		  <span>Share</span>
+		</button>
 
         </div>
       </div>

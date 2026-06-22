@@ -4,8 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '../context/AppContext';
-import { Heart, ShoppingCart, Star, Eye } from 'lucide-react';
+import { Heart, ShoppingCart, Star, Eye, Share2 } from 'lucide-react';
 import { Product } from '../lib/firebase';
+import { handleShare } from '../lib/share';
 import { motion } from 'framer-motion';
 import { normalizeSlug } from '../lib/slugUtils';
 
@@ -18,6 +19,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const isWishlisted = wishlist.includes(product.id);
   const inCart = cart.some(item => item.product.id === product.id);
+
+
 
   // Discount calculation
   const discountPercent = Math.round(((product.price - product.discountPrice) / product.price) * 100);
@@ -44,6 +47,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         aria-label="Add to wishlist"
       >
         <Heart className={`w-4 h-4 transition-colors duration-200 ${isWishlisted ? 'fill-red-500 text-red-500 scale-110' : ''}`} />
+      </button>
+      <button
+        onClick={() => handleShare(product)}
+        className="absolute top-3 right-10 p-2 rounded-full bg-white/80 hover:bg-white text-gray-400 hover:text-blue-500 border border-gray-100 shadow-sm z-10 transition-colors duration-200"
+        aria-label="Share product"
+      >
+        <Share2 className="w-4 h-4" />
       </button>
 
       {/* Image Gallery Container (Clickable links to Details) */}

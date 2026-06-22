@@ -40,6 +40,8 @@ export interface Product {
   occasion?: string;
   weight?: string;
   availability?: string;
+  deleted?: boolean;
+  deletedAt?: string | null;
 }
 
 export interface Address {
@@ -479,12 +481,14 @@ const isRealFirebase = Boolean(
 let app;
 let realAuth: any = null;
 let realDb: any = null;
+export let db: any = null;
 
 if (isRealFirebase) {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     realAuth = getAuth(app);
-    realDb = getFirestore(app);
+    db = getFirestore(app);
+    realDb = db;
     console.log('[Firebase] ✓ REAL Firebase initialized successfully', {
       projectId: firebaseConfig.projectId,
       authDomain: firebaseConfig.authDomain,
@@ -524,7 +528,7 @@ class DatabaseSimulator {
 
   // Collections
   getProducts(): Product[] {
-    return this.getStorageItem('products', INITIAL_PRODUCTS);
+    return this.getStorageItem('products', []);
   }
 
   saveProducts(products: Product[]) {
@@ -1160,10 +1164,23 @@ export const serviceDb = {
         const snap = await getDocs(collection(realDb, 'products'));
         const list: Product[] = [];
         snap.forEach(doc => {
-          list.push({ id: doc.id, ...doc.data() } as Product);
+          const data = doc.data();
+          let createdAt = data.createdAt;
+          if (createdAt && typeof createdAt.toDate === 'function') {
+            createdAt = createdAt.toDate().toISOString();
+          } else if (createdAt && typeof createdAt === 'object' && createdAt.seconds) {
+            createdAt = new Date(createdAt.seconds * 1000).toISOString();
+          }
+          list.push({ id: doc.id, ...data, createdAt } as Product);
         });
+
+        // No seeding of dummy products; return empty list if collection is empty.
+        // list remains empty.
+        
+
+
         console.log('[Firestore] Products loaded:', { count: list.length, collection: 'products' });
-        return list.length > 0 ? list : INITIAL_PRODUCTS;
+        return list;
       } catch (error: any) {
         console.error('[Firestore] Error fetching products:', {
           errorCode: error.code,
@@ -1172,7 +1189,7 @@ export const serviceDb = {
           operation: 'getDocs'
         });
         // Fallback to initial products on error
-        return INITIAL_PRODUCTS;
+        return [];
       }
     } else {
       return dbSimulator.getProducts();
@@ -1186,8 +1203,23 @@ export const serviceDb = {
         const q = collection(realDb, 'products');
         const unsub = onSnapshot(q, (snap) => {
           const list: Product[] = [];
-          snap.forEach(doc => list.push({ id: doc.id, ...doc.data() } as Product));
-          callback(list.length > 0 ? list : INITIAL_PRODUCTS);
+          snap.forEach(doc => {
+            const data = doc.data();
+            let createdAt = data.createdAt;
+            if (createdAt && typeof createdAt.toDate === 'function') {
+              createdAt = createdAt.toDate().toISOString();
+            } else if (createdAt && typeof createdAt === 'object' && createdAt.seconds) {
+              createdAt = new Date(createdAt.seconds * 1000).toISOString();
+            }
+            list.push({ id: doc.id, ...data, createdAt } as Product);
+          });
+          
+          if (list.length > 0) {
+            callback(list);
+          } else {
+            // Trigger seeding if empty
+            serviceDb.getProducts().then(products => callback(products));
+          }
         }, (error) => {
           console.error('[Firestore] onProductsChanged error:', {
             errorCode: (error as any).code,
@@ -1229,9 +1261,13 @@ export const serviceDb = {
       const suffix = Math.random().toString(36).substr(2, 4).toUpperCase();
       return `${prefix}-${suffix}`;
     };
-    const productWithSku = { ...product, sku: product.sku ?? generateSku(product) };
-
+    
     if (realDb) {
+      const productWithSku: any = { 
+        ...product, 
+        sku: product.sku ?? generateSku(product),
+        createdAt: serverTimestamp()
+      };
       try {
         const docRef = await addDoc(collection(realDb, 'products'), productWithSku);
         console.log('[Firestore] Product added:', { id: docRef.id, collection: 'products' });
@@ -1246,9 +1282,14 @@ export const serviceDb = {
         throw error;
       }
     } else {
+      const productWithSku = { 
+        ...product, 
+        sku: product.sku ?? generateSku(product),
+        createdAt: new Date().toISOString()
+      };
       const products = dbSimulator.getProducts();
       const newProduct = { ...productWithSku, id: 'prod-' + Math.random().toString(36).substr(2, 9) };
-      products.push(newProduct);
+      products.push(newProduct as any);
       dbSimulator.saveProducts(products);
       return newProduct.id;
     }

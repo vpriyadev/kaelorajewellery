@@ -7,11 +7,14 @@ import { uploadToCloudinary } from '../../../lib/cloudinary';
 import { validateImageFiles, getFriendlyErrorMessage, processImageForUpload } from '../../../lib/imageUtils';
 import { normalizeSlug } from '../../../lib/slugUtils';
 import Image from 'next/image';
-import { Plus, Edit2, Trash2, X, Upload } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Upload, RotateCcw } from 'lucide-react';
+
 
 export default function AdminProductsPage() {
   const { triggerToast } = useApp();
   const [products, setProducts] = useState<Product[]>([]);
+  const [deletedProducts, setDeletedProducts] = useState<Product[]>([]);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -57,7 +60,10 @@ export default function AdminProductsPage() {
     setLoading(true);
     try {
       const data = await serviceDb.getProducts();
-      setProducts(data);
+      const active = data.filter((p: any) => p.deleted !== true);
+      const deleted = data.filter((p: any) => p.deleted === true);
+      setProducts(active);
+      setDeletedProducts(deleted);
     } catch (error: any) {
       const errorMessage = getFriendlyErrorMessage(error);
       triggerToast(errorMessage, 'error');
@@ -143,20 +149,24 @@ export default function AdminProductsPage() {
 
   const handleSaveProduct = async () => {
     // Validation
-    if (!form.name) {
-      triggerToast('Product Name is required', 'error');
-      return;
-    }
-    if (!form.description) {
-      triggerToast('Product Description is required', 'error');
+    if (!form.name || !form.name.trim()) {
+      triggerToast('Product name cannot be empty', 'error');
       return;
     }
     if (!form.category) {
-      triggerToast('Category is required', 'error');
+      triggerToast('Category required', 'error');
+      return;
+    }
+    if (typeof form.price !== 'number' || isNaN(form.price)) {
+      triggerToast('Price must be number', 'error');
       return;
     }
     if (form.price <= 0) {
       triggerToast('Price must be greater than 0', 'error');
+      return;
+    }
+    if (!form.description || !form.description.trim()) {
+      triggerToast('Product Description is required', 'error');
       return;
     }
     if (form.stock < 0) {
@@ -164,7 +174,7 @@ export default function AdminProductsPage() {
       return;
     }
     if (form.images.length === 0) {
-      triggerToast('At least one product image is required', 'error');
+      triggerToast('At least 1 image required', 'error');
       return;
     }
     const generatedSlug = normalizeSlug(form.name);
@@ -182,10 +192,10 @@ export default function AdminProductsPage() {
       setLoading(true);
       if (editingId) {
         await serviceDb.updateProduct(editingId, payload);
-        triggerToast('Product saved successfully.', 'success');
+        triggerToast('Product updated successfully', 'success');
       } else {
         await serviceDb.addProduct(payload);
-        triggerToast('Product saved successfully.', 'success');
+        triggerToast('Product added successfully', 'success');
       }
       setShowModal(false);
       resetForm();
@@ -200,11 +210,38 @@ export default function AdminProductsPage() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Move to deleted items? You can restore it later.')) return;
+    try {
+      setLoading(true);
+      await serviceDb.updateProduct(id, { deleted: true, deletedAt: new Date().toISOString() });
+      triggerToast('Product moved to deleted items successfully!', 'success');
+      await loadProducts();
+    } catch (error: any) {
+      triggerToast(`Error deleting product: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestoreProduct = async (id: string) => {
+    try {
+      setLoading(true);
+      await serviceDb.updateProduct(id, { deleted: false } as any);
+      triggerToast('Product restored successfully!', 'success');
+      await loadProducts();
+    } catch (error: any) {
+      triggerToast(`Error restoring product: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePermanentDeleteProduct = async (id: string) => {
+    if (!confirm('Permanently delete? This cannot be undone.')) return;
     try {
       setLoading(true);
       await serviceDb.deleteProduct(id);
-      triggerToast('Product deleted successfully!', 'success');
+      triggerToast('Product permanently deleted!', 'success');
       await loadProducts();
     } catch (error: any) {
       triggerToast(`Error deleting product: ${error.message}`, 'error');
@@ -323,12 +360,34 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setShowDeleted(false)}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            !showDeleted ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Active ({products.length})
+        </button>
+        <button
+          onClick={() => setShowDeleted(true)}
+          className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            showDeleted ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Deleted ({deletedProducts.length})
+        </button>
+      </div>
+
       {/* Products Table */}
       <div className="bg-white border border-amber-100 rounded-3xl overflow-hidden">
-        {loading && products.length === 0 ? (
+        {loading && (showDeleted ? deletedProducts.length === 0 : products.length === 0) ? (
           <div className="p-6 text-center text-gray-500">Loading products...</div>
-        ) : products.length === 0 ? (
+        ) : (!showDeleted && products.length === 0) ? (
           <div className="p-6 text-center text-gray-500">No products found. Create one to get started!</div>
+        ) : (showDeleted && deletedProducts.length === 0) ? (
+          <div className="p-6 text-center text-gray-500">No deleted products found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -342,24 +401,45 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.map(product => (
-                  <tr key={product.id} className="border-b border-amber-100 hover:bg-gray-50">
-                    <td className="px-6 py-3 text-sm text-gray-700">{product.name}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">₹{product.discountPrice}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">
-                      <span className={product.stock === 0 ? 'text-red-600 font-semibold' : ''}>{product.stock}</span>
-                    </td>
-                    <td className="px-6 py-3 text-sm text-gray-700 capitalize">{product.category}</td>
-                    <td className="px-6 py-3 text-center text-sm flex justify-center gap-2">
-                      <button onClick={() => handleEditProduct(product)} className="p-2 hover:bg-blue-100 rounded-lg text-blue-600">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => handleDeleteProduct(product.id)} className="p-2 hover:bg-red-100 rounded-lg text-red-600">
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {!showDeleted ? (
+                  products.map(product => (
+                    <tr key={product.id} className="border-b border-amber-100 hover:bg-gray-50">
+                      <td className="px-6 py-3 text-sm text-gray-700">{product.name}</td>
+                      <td className="px-6 py-3 text-sm text-gray-700">₹{product.discountPrice}</td>
+                      <td className="px-6 py-3 text-sm text-gray-700">
+                        <span className={product.stock === 0 ? 'text-red-600 font-semibold' : ''}>{product.stock}</span>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-700 capitalize">{product.category}</td>
+                      <td className="px-6 py-3 text-center text-sm flex justify-center gap-2">
+                        <button onClick={() => handleEditProduct(product)} className="p-2 hover:bg-blue-100 rounded-lg text-blue-600">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => handleDeleteProduct(product.id)} className="p-2 hover:bg-red-100 rounded-lg text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  deletedProducts.map(product => (
+                    <tr key={product.id} className="border-b border-amber-100 hover:bg-gray-50 opacity-70">
+                      <td className="px-6 py-3 text-sm text-gray-700 line-through">{product.name}</td>
+                      <td className="px-6 py-3 text-sm text-gray-700">₹{product.discountPrice}</td>
+                      <td className="px-6 py-3 text-sm text-gray-700">
+                        <span className={product.stock === 0 ? 'text-red-600 font-semibold' : ''}>{product.stock}</span>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-gray-700 capitalize">{product.category}</td>
+                      <td className="px-6 py-3 text-center text-sm flex justify-center gap-2">
+                        <button onClick={() => handleRestoreProduct(product.id)} className="p-2 hover:bg-green-100 rounded-lg text-green-600">
+                          <RotateCcw size={16} />
+                        </button>
+                        <button onClick={() => handlePermanentDeleteProduct(product.id)} className="p-2 hover:bg-red-100 rounded-lg text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
